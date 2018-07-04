@@ -1,0 +1,9 @@
+Run-time error in controlfile: TestOEM.arts
+Unknown Method:
+retrievalDefInit
+File:   TestOEM.arts
+Line:   110
+Column: 1
+
+Stopping ARTS execution.
+Goodbye.
