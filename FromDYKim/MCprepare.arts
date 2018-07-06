@@ -1,0 +1,100 @@
+#DEFINITIONS:  -*-sh-*-
+#This control file prepares a lot of atmospheric field data for the ARTS-MC examples
+#simpleMCGeneral.arts, and simpleMCGeneralGaussian.arts, simpleMC.arts
+
+
+Arts2 {
+
+INCLUDE "general/general.arts"
+INCLUDE "general/continua.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+# Agenda for scalar gas absorption calculation
+Copy(abs_xsec_agenda, abs_xsec_agenda__noCIA)
+
+output_file_formatSetBinary
+
+VectorSet( f_grid, [183.31e9] )
+
+WriteXML( output_file_format, f_grid )
+
+IndexSet( f_index, 0 )
+
+IndexSet( stokes_dim, 4 )
+
+AtmosphereSet3D
+
+ReadXML( p_grid, "../DAIO/p_grid.xml" )
+
+ReadXML( lat_grid, "../DAIO/lat_grid.xml" )
+
+ReadXML( lon_grid, "../DAIO/lon_grid.xml" )
+
+abs_speciesSet( species=
+            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O", 
+             "N2-SelfContStandardType",
+             "O3",
+             "O2-SelfContStandardType"] ) 
+
+abs_lines_per_speciesSetEmpty
+
+AtmRawRead( basename="testdata/tropical" )
+
+AtmFieldsCalcExpand1D
+
+#WriteXML( output_file_format, t_field )
+
+#WriteXML( output_file_format, z_field )
+
+ReadXML( t_field, "../DAIO/MC_data_t_field.xml" )
+
+ReadXML( z_field, "../DAIO/MC_data_z_field.xml" )
+
+WriteXML( output_file_format, vmr_field, "../DAIO/MC_data_vmr_field.xml" )
+
+nelemGet( nrows, lat_grid )
+
+nelemGet( ncols, lon_grid )
+
+MatrixSetConstant( z_surface, nrows, ncols, 0.0 )
+
+WriteXML( output_file_format, z_surface, "../DAIO/MC_data_z_surface.xml" )
+
+abs_xsec_agenda_checkedCalc
+atmfields_checkedCalc
+
+abs_lookupSetup
+abs_lookupCalc
+WriteXML( output_file_format, abs_lookup, "../DAIO/MC_data_gas_abs_lookup.xml" )
+
+
+#cloudboxSetManually( p1=21617.7922264, p2=17111.6808705,
+#                     lat1=-1.9, lat2=1.9, lon1=-1.9, lon2=1.9 )
+cloudboxSetManually( p1=120000, p2=10000,
+                     lat1=34.26, lat2=37.18, lon1=124.7, lon2=127.19 ) 
+Print( cloudbox_limits, 1 )
+
+ParticleTypeInit
+
+ParticleTypeAdd( filename_scat_data="./general/P20FromHong_ShapePlate_Dmax0050um.xml",
+                 filename_pnd_field="" )
+
+#ReadXML( pnd_field_raw, "../DAIO/pnd_field_raw.xml" )
+
+#pnd_fieldCalc
+
+#WriteXML( output_file_format, pnd_field, "../DAIO/MC_data_pnd_field.xml" )
+
+scat_data_array_monoCalc
+
+#For some reason SingleScatteringData binary files can't be loaded 
+output_file_formatSetAscii
+
+WriteXML( output_file_format, scat_data_array,"../DAIO/MC_data_scat_array.xml" )
+
+WriteXML( output_file_format, scat_data_array_mono, "../DAIO/MC_data_scat_array_mono.xml" )
+
+WriteXML( output_file_format, cloudbox_limits, "../DAIO/MC_data_cloudbox_limits.xml" )
+
+}

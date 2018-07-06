@@ -1,0 +1,197 @@
+#DEFINITIONS:  -*-sh-*-
+#
+# Demonstration and test of simple ARTS 1D, 2D and 3D clear sky calculations.
+#
+# Observations from a satellite is treated, with three viewing directions:
+#   1: Cold space (ie. above the model atmosphere)
+#   2: Limb sounding
+#   3: Downward observation.
+#
+# For the test sequence (ie. "make check") this is a first test on that the
+# full chain around yCalc is working. Calculation of optical depth as an
+# auxilary variable is included and tested.
+#
+# Author: Patrick Eriksson
+
+
+Arts2 {
+
+INCLUDE "general/general.arts"
+INCLUDE "general/continua.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+# Agenda for scalar gas absorption calculation
+Copy(abs_xsec_agenda, abs_xsec_agenda__noCIA)
+
+# cosmic background radiation
+Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
+
+# Planck as blackbody radiation
+Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
+
+# no refraction
+Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
+
+# blackbody surface with skin temperature interpolated from t_surface field
+Copy( surface_rtprop_agenda, surface_rtprop_agenda__Blackbody_SurfTFromt_field )
+
+
+output_file_formatSetBinary 
+
+#### LOAD DATA: these files were created with MCDataPrepare.arts ######
+
+ReadXML( f_grid, "../DAIO/f_grid.xml" )
+#VectorSet( f_grid, [55.5e9] ) 
+#VectorSet( f_grid, [18.700e9, 22.235e9,
+#                    37.000e9, 40.000e9,
+#                    50.300e9, 52.300e9, 53.600e9, 54.550e9,
+#                    55.750e9, 57.000e9, 58.400e9, 59.800e9 ] ) 
+
+IndexSet( f_index, 0 )
+
+IndexSet( stokes_dim, 4 )
+
+AtmosphereSet3D
+
+ReadXML( p_grid, "../DAIO/p_grid.xml" )
+
+ReadXML( lat_grid, "../DAIO/lat_grid.xml" )
+
+ReadXML( lon_grid, "../DAIO/lon_grid.xml" )
+
+#abs_speciesSet( species=
+#            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O", 
+#             "N2-SelfContStandardType",
+#             "O3",
+#             "O2-SelfContStandardType"] ) 
+abs_speciesSet( species=
+            ["H2O-PWR98", 
+             "N2-SelfContStandardType",
+             "O3",
+             "O2-PWR98"] ) 
+
+abs_lines_per_speciesSetEmpty
+
+#AtmRawRead( basename="testdata/tropical" ) 
+#AtmRawRead( basename="../DAIO/tropical" ) 
+AtmRawRead( basename="../DAIO/tropical" ) 
+
+AtmFieldsCalcExpand1D 
+
+ReadXML( t_field, "../DAIO/t_field.xml" )
+
+ReadXML( z_field, "../DAIO/z_field.xml" )
+
+ReadXML( t_surface, "../DAIO/t_surface.xml" )
+
+WriteXML( output_file_format, vmr_field, "../DAIO/vmr_field.xml" ) 
+
+nelemGet( nrows, lat_grid )
+
+nelemGet( ncols, lon_grid )
+
+MatrixSetConstant( z_surface, nrows, ncols, 0.0 )
+
+WriteXML( output_file_format, z_surface, "../DAIO/z_surface.xml" ) 
+
+abs_xsec_agenda_checkedCalc
+atmfields_checkedCalc
+abs_lookupSetup
+abs_lookupCalc
+
+WriteXML( output_file_format, abs_lookup, "../DAIO/gas_abs_lookup.xml" ) 
+
+cloudboxSetManually( p1=120000, p2=10000,
+                     lat1=34.26, lat2=37.18, lon1=124.7, lon2=127.19 ) 
+Print( cloudbox_limits, 1 )
+
+ParticleTypeInit
+
+#ParticleTypeAdd( filename_scat_data="./general/P20FromHong_ShapePlate_Dmax0050um.xml",
+ParticleTypeAdd( filename_scat_data="./general/MieSphere_R1.00000e+00um.xml",
+                 filename_pnd_field="" )
+
+scat_data_array_monoCalc
+
+WriteXML( output_file_format, scat_data_array,"../DAIO/scat_array.xml" )
+
+WriteXML( output_file_format, scat_data_array_mono, "../DAIO/scat_array_mono.xml" )
+
+WriteXML( output_file_format, cloudbox_limits, "../DAIO/cloudbox_limits.xml" )
+
+
+abs_lookupAdapt 
+
+FlagOn( cloudbox_on )
+ReadXML( cloudbox_limits, "../DAIO/cloudbox_limits.xml" )
+Print(cloudbox_limits)
+
+ReadXML( pnd_field, "../DAIO/pnd_field.xml" )
+
+ReadXML( scat_data_array_mono, "../DAIO/scat_array_mono.xml" )
+
+#### Define Agendas #################################################
+
+# absorption from LUT
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
+
+
+#### Define viewing position and line of sight #########################
+
+ReadXML( sensor_los, "../DAIO/sensor_los.xml" )
+ReadXML( sensor_pos, "../DAIO/sensor_pos.xml" )
+Print( sensor_pos, 1 )
+
+Print( sensor_los, 1 )
+
+
+#### Set some Monte Carlo parameters ###################################
+
+IndexSet( stokes_dim, 1 )
+
+StringSet( iy_unit, "RJBT" )
+
+NumericSet( ppath_lmax, 3e3 )
+
+MCSetSeedFromTime
+
+Print( mc_seed, 1 )
+
+mc_antennaSetPencilBeam
+
+#### Check atmosphere ##################################################
+
+atmfields_checkedCalc
+atmgeom_checkedCalc
+cloudbox_checkedCalc( scat_data_array=scat_data_array_mono )
+
+
+#### Perform Monte Carlo RT Calculation #################################
+
+#NumericSet( mc_std_err, -1 )
+NumericSet( mc_std_err, 1 )
+#IndexSet( mc_max_time, -1 )
+IndexSet( mc_max_time, 10 )
+#IndexSet( mc_max_time, 1 )
+IndexSet( mc_max_iter, -1 )
+
+abs_xsec_agenda_checkedCalc
+propmat_clearsky_agenda_checkedCalc
+MCGeneral
+
+#### Save calculated Stokes vector and std. err.#########################
+
+output_file_formatSetAscii
+WriteXML( "ascii", y, "TIP_MC3D_Clear.xml" )
+WriteXML( "ascii", mc_error, "TIP_MC3D_err.xml" )
+
+#### Print number of photons and radiance units ########################
+
+Print( mc_iteration_count, 1 )
+
+Print( iy_unit, 1 )
+
+}
+
+

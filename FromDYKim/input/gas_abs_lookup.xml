@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<arts format="binary" version="1">
+<GasAbsLookup><Array type="ArrayOfSpeciesTag" nelem="4">
+<Array type="SpeciesTag" nelem="1">
+<SpeciesTag>"H2O-PWR98-*-*"</SpeciesTag>
+</Array>
+<Array type="SpeciesTag" nelem="1">
+<SpeciesTag>"N2-SelfContStandardType-*-*"</SpeciesTag>
+</Array>
+<Array type="SpeciesTag" nelem="1">
+<SpeciesTag>"O3-*-*-*"</SpeciesTag>
+</Array>
+<Array type="SpeciesTag" nelem="1">
+<SpeciesTag>"O2-PWR98-*-*"</SpeciesTag>
+</Array>
+</Array>
+<Array name="NonlinearSpecies" type="Index" nelem="2">
+<Index></Index>
+<Index></Index>
+</Array>
+<Vector name="FrequencyGrid" nelem="12">
+</Vector>
+<Vector name="PressureGrid" nelem="40">
+</Vector>
+<Matrix name="ReferenceVmrProfiles" nrows="4" ncols="40">
+</Matrix>
+<Vector name="ReferenceTemperatureProfile" nelem="40">
+</Vector>
+<Vector name="TemperaturePertubations" nelem="8">
+</Vector>
+<Vector name="NonlinearSpeciesVmrPertubations" nelem="6">
+</Vector>
+<Tensor4 name="AbsorptionCrossSections" nbooks="8" npages="14" nrows="12" ncols="40">
+</Tensor4>
+</GasAbsLookup>
+</arts>

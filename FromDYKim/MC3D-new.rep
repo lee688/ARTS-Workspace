@@ -1,0 +1,7 @@
+Run-time error in controlfile: MC3D-new.arts
+Run-time error in method: ReadXML
+Cannot find input file: ../DAIO/f_grid.xml
+Search path:   . /home/user/Desktop/arts-2.2/controlfiles /home/user/Desktop/arts-2.2/controlfiles/general   .
+
+Stopping ARTS execution.
+Goodbye.

@@ -1,0 +1,142 @@
+#DEFINITIONS:  -*-sh-*-
+#This control file performs an ARTS-MC radiative transfer simulation
+#For a single line of sight and a Pencil Beam antenna response
+
+
+Arts2 {
+
+INCLUDE "general/general.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+# Agenda for scalar gas absorption calculation
+Copy(abs_xsec_agenda, abs_xsec_agenda__noCIA)
+
+# cosmic background radiation
+Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
+
+# Planck as blackbody radiation
+Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
+
+# no refraction
+Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
+
+# blackbody surface with skin temperature interpolated from t_surface field
+Copy( surface_rtprop_agenda, surface_rtprop_agenda__Blackbody_SurfTFromt_field )
+
+
+#### LOAD DATA: these files were created with MCDataPrepare.arts ######
+
+#ReadXML( f_grid, "../DAIO/TestMonteCarloDataPrepare.f_grid.xml" )
+VectorSet( f_grid, [183.31e9] ) 
+
+IndexSet( f_index, 0 )
+
+ReadXML( p_grid, "../DAIO/p_grid.xml" )
+
+AtmosphereSet3D
+
+ReadXML( lat_grid, "../DAIO/lat_grid.xml" )
+
+ReadXML( lon_grid, "../DAIO/lon_grid.xml" )
+
+ReadXML( t_field, "../DAIO/MC_data_t_field.xml" )
+
+ReadXML( z_field, "../DAIO/MC_data_z_field.xml" )
+
+ReadXML( vmr_field, "../DAIO/MC_data_vmr_field.xml" )
+
+ReadXML( z_surface, "../DAIO/MC_data_z_surface.xml" )
+
+ReadXML( abs_lookup, "../DAIO/MC_data_gas_abs_lookup.xml" )
+
+#abs_speciesSet( species=
+#                [ "O2-PWR93", "N2-SelfContStandardType", "H2O-PWR98" ] )
+abs_speciesSet( species=
+            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O", 
+             "N2-SelfContStandardType",
+             "O3",
+             "O2-SelfContStandardType"] ) 
+
+abs_lookupAdapt
+
+FlagOn( cloudbox_on )
+ReadXML( cloudbox_limits, "../DAIO/MC_data_cloudbox_limits.xml" )
+Print(cloudbox_limits)
+
+ReadXML( pnd_field, "../DAIO/MC_data_pnd_field.xml" )
+
+ReadXML( scat_data_array_mono, "../DAIO/MC_data_scat_array_mono.xml" )
+
+#### Define Agendas #################################################
+
+# absorption from LUT
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
+
+
+#### Define viewing position and line of sight #########################
+
+#rte_losSet( rte_los, atmosphere_dim, 99.7841941981, 180 )
+ReadXML( rte_los, "../DAIO/MC_rte_los.xml" )
+Print(rte_los) 
+
+#rte_posSet( rte_pos, atmosphere_dim, 95000.1, 7.61968838781, 0 )
+ReadXML( rte_pos, "../DAIO/MC_rte_pos.xml" )
+Print(rte_pos) 
+
+Matrix1RowFromVector( sensor_pos, rte_pos )
+
+Print( sensor_pos, 1 )
+
+Matrix1RowFromVector( sensor_los, rte_los )
+
+Print( sensor_los, 1 )
+
+
+#### Set some Monte Carlo parameters ###################################
+
+IndexSet( stokes_dim, 4 )
+
+StringSet( iy_unit, "RJBT" )
+
+NumericSet( ppath_lmax, 3e3 )
+
+MCSetSeedFromTime
+
+Print( mc_seed, 1 )
+
+mc_antennaSetPencilBeam
+
+#### Check atmosphere ##################################################
+
+atmfields_checkedCalc
+atmgeom_checkedCalc
+cloudbox_checkedCalc( scat_data_array=scat_data_array_mono )
+
+
+#### Perform Monte Carlo RT Calculation #################################
+
+NumericSet( mc_std_err, -1 )
+#IndexSet( mc_max_time, 30 )
+IndexSet( mc_max_time, 20 )
+IndexSet( mc_max_iter, -1 )
+
+abs_xsec_agenda_checkedCalc
+propmat_clearsky_agenda_checkedCalc
+MCGeneral
+
+#### Save calculated Stokes vector and std. err.#########################
+
+output_file_formatSetAscii
+WriteXML( output_file_format, y, "MCgeneral.xml" )
+
+WriteXML( output_file_format, mc_error, "MCgeneral_error.xml" )
+
+#### Print number of photons and radiance units ########################
+
+Print( mc_iteration_count, 1 )
+
+Print( iy_unit, 1 )
+
+}
+
