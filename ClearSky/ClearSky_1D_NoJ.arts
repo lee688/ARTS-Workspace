@@ -3,8 +3,6 @@
 
 
 
-
-
 #DEFINITIONS:  -*-sh-*-
 #
 # Demonstration and test of simple ARTS 1D, 2D and 3D clear sky calculations.
@@ -19,8 +17,6 @@
 # auxilary variable is included and tested.
 #
 # Author: Patrick Eriksson
-
-
 
 
 
@@ -56,13 +52,16 @@ Copy( ppath_agenda, ppath_agenda__FollowSensorLosPath )
 Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
 
 # Number of Stokes components to be computed
+#
 IndexSet( stokes_dim, 1 )
 
 # Clearsky = No scattering
+#
 cloudboxOff
 
-
-
+# No calculation jacobian
+#
+jacobianOff
 
 
 # Read a line file and a matching small frequency grid
@@ -70,16 +69,14 @@ cloudboxOff
 ReadXML( abs_lines, "./abs_lines.xml" )
 #VectorNLinSpace( f_grid, 5, 320e9, 322e9 )
 #VectorSet( f_grid, [183.31e9] )
-
-# Create a frequency grid 
-# ---
 ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
-#IndexSet( f_index, 0 ) 
+IndexSet( f_index, 0 ) 
 
 # A pressure grid rougly matching 0 to 80 km, in steps of 2 km.
 # ---
 #VectorNLogSpace( p_grid, 41, 1000e2, 1 )
 ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
+
 
 # Definition of species
 # ---
@@ -89,19 +86,23 @@ ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
 #             "O3",
 #             "O2-SelfContStandardType"] ) 
 abs_speciesSet( species=
-		["H2O-PWR98",
-		 "N2-SelfContStandardType",
-		 "O3",
-		 "O2-PWR98"] ) 
+            ["H2O-PWR98", 
+             "N2-SelfContStandardType",
+             "O3",
+             "O2-PWR98"] ) #?
+
 
 # Sort the line file according to species
 # ---
 abs_lines_per_speciesCreateFromLines
 
+
 # Atmospheric scenario
 # ---
+#AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
 AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
-		"./ClearSky_1D" )
+            "./ClearSky_1D" ) #?
+
 
 # Weakly reflecting surface
 # ---
@@ -119,14 +120,12 @@ sensorOff
 StringSet( iy_unit, "RJBT" )
 #StringSet( iy_unit, "PlanckBT" )
 
+
 # Extract radiative background and optical depth as auxiliary variables
 # ---
 #ArrayOfStringSet( iy_aux_vars, [ "Optical depth", "Radiative background" ] )
-
 # Create vector container for the optical depth
 #VectorCreate( odepth )
-
-
 
 
 
@@ -153,29 +152,6 @@ Print( sensor_pos, 1 )
 Print( sensor_los, 1 )
 
 
-
-
-
-#Jacobian calculation
-# ---
-jacobianInit
-VectorCreate(g1)
-VectorCreate(g2)
-VectorCreate(g3)
-Copy(g1, p_grid) # Pressure retrieval grid
-Copy(g2, lat_grid) # Latitude retrieval grid
-Copy(g3, lon_grid) # Longitude retrieval grid
-jacobianAddTemperature( jacobian_quantities, jacobian_agenda, atmosphere_dim,
-	p_grid, lat_grid, lon_grid, g1, g2, g3, "off", "analytical", 0.1) 
-jacobianAddAbsSpecies( jacobian_quantities, jacobian_agenda, atmosphere_dim,
-	p_grid, lat_grid, lon_grid, g1, g2, g3, "H2O-PWR98")
-jacobianClose
-#jacobianCalcAbsSpeciesAnalytical
-
-
-
-
-
 # Perform RT calculations
 # ---
 abs_xsec_agenda_checkedCalc
@@ -187,9 +163,6 @@ sensor_checkedCalc
 yCalc
 
 
-
-
-
 # OK?
 # ---
 #Extract( odepth, y_aux, 0 )
@@ -197,8 +170,7 @@ yCalc
 WriteXML( "ascii", y, "ClearSky_1D_Tb.xml" ) # Brightness temperature
 WriteXML("ascii", z_field, "ClearSky_1D_z_field.xml") # Geometric altitude used
 WriteXML("ascii", t_field, "ClearSky_1D_t_field.xml") # Temperature profile used
-WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used 
-WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
+WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used. 
 
 #WriteXML( "ascii", odepth, "ClearSky_1D_odp.xml" )
 #WriteXML( "ascii", y, "yREFERENCE_1D.xml" )
@@ -208,6 +180,7 @@ WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
 #Compare( y, yREFERENCE, 1e-2 )
 #ReadXML( yREFERENCE, "y_auxREFERENCE_1D.xml" )
 #Compare( odepth, yREFERENCE, 1e-3 )
+
 
 } # End of Main
  
