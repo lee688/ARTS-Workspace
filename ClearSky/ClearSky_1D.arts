@@ -159,12 +159,12 @@ Print( sensor_los, 1 )
 #Jacobian calculation
 # ---
 jacobianInit
-VectorCreate(g1)
-VectorCreate(g2)
-VectorCreate(g3)
-Copy(g1, p_grid) # Pressure retrieval grid
-Copy(g2, lat_grid) # Latitude retrieval grid
-Copy(g3, lon_grid) # Longitude retrieval grid
+VectorCreate(g1) # Pressure retrieval grid
+VectorCreate(g2) # Latitude retrieval grid
+VectorCreate(g3) # Longitude retrieval grid
+Copy(g1, p_grid) 
+Copy(g2, lat_grid) 
+Copy(g3, lon_grid) 
 jacobianAddTemperature( jacobian_quantities, jacobian_agenda, atmosphere_dim,
 	p_grid, lat_grid, lon_grid, g1, g2, g3, "off", "analytical", 0.1) 
 jacobianAddAbsSpecies( jacobian_quantities, jacobian_agenda, atmosphere_dim,
