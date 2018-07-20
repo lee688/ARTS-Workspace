@@ -1,5 +1,6 @@
 # Raw trial by B Lee (ARA Consulting and Techonology)
 # The following comments come from the previous code on which my code was written. 
+# This is for ARTS development version. 
 
 
 
@@ -43,8 +44,9 @@ Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
 # standard surface agenda (i.e., make use of surface_rtprop_agenda)
 Copy( iy_surface_agenda, iy_surface_agenda__UseSurfaceRtprop )
 
-# Planck as blackbody radiation
-Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
+# Planck as blackbody radiation. 
+#Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
+# This was included in the version 2.2, but not in this development version. 
 
 # on-the-fly absorption
 Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
@@ -57,9 +59,6 @@ Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
 
 # Number of Stokes components to be computed
 IndexSet( stokes_dim, 1 )
-
-# Clearsky = No scattering
-cloudboxOff
 
 
 
@@ -100,8 +99,10 @@ abs_lines_per_speciesCreateFromLines
 
 # Atmospheric scenario
 # ---
-AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
-		"./ClearSky_1D" )
+#AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
+#		"./ClearSky_1D" )
+AtmRawRead( basename = "./ClearSky_1D" )
+# This is another difference from version 2.2. 
 
 # Weakly reflecting surface
 # ---
@@ -172,6 +173,13 @@ jacobianAddAbsSpecies( jacobian_quantities, jacobian_agenda, atmosphere_dim,
 jacobianClose
 #jacobianCalcAbsSpeciesAnalytical
 
+
+
+
+
+# Clearsky = No scattering
+cloudboxOff
+# This line is moved down here because somehow it needs jacobian inputs. 
 
 
 
