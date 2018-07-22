@@ -106,9 +106,9 @@ AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species,
 
 # Weakly reflecting surface
 # ---
-#VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
-#Copy( surface_rtprop_agenda,
-#      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
+VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
+Copy( surface_rtprop_agenda,
+      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
 
 # No sensor properties
 # ---

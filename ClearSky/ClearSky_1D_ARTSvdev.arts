@@ -106,9 +106,9 @@ AtmRawRead( basename = "./ClearSky_1D" )
 
 # Weakly reflecting surface
 # ---
-#VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
-#Copy( surface_rtprop_agenda,
-#      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
+VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
+Copy( surface_rtprop_agenda,
+      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
 
 # No sensor properties
 # ---
