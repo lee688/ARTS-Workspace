@@ -42,19 +42,21 @@ IndexSet( stokes_dim, 1 )
 #NumericCreate( f_end )
 #IndexCreate( nf )
 VectorCreate( p_ret_grid )
-#IndexCreate( np )
+IndexCreate( np )
 #
 #NumericSet( f_start, 110.436e9 )
 #NumericSet( f_end, 111.236e9 )
 #IndexSet( nf, 801 )
 #IndexSet( np, 81 )
+IndexSet( np, 15 )
 #
 #VectorNLinSpace( f_grid, nf, f_start, f_end )
 #VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
 #VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
 ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
 ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
-ReadXML( p_ret_grid, "./ClearSky_1D_p_grid.xml" )
+#ReadXML( p_ret_grid, "./ClearSky_1D_p_grid.xml" )
+VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
 
 
 # Spectroscopy
@@ -66,8 +68,8 @@ abs_speciesSet( species=
 		 "O3",
 		 "O2-PWR98"] ) 
 #
-#ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
-#abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
+ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
+abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
 #ReadXML( abs_lines, "testdata/ozone_line.xml" )
 ReadXML( abs_lines, "./abs_lines.xml" )
@@ -115,6 +117,7 @@ MatrixSetConstant( sensor_los, 1, 1, 0 )
 VectorSetConstant( sensor_time, 1, 0 )
 
 
+
 # Deactive parts not used and perform all remaining tests
 #
 jacobianOff
@@ -127,18 +130,17 @@ atmgeom_checkedCalc
 sensor_checkedCalc
 
 
+
 # Covariance matrices covmat_sx, covmat_se and their inverse.
 #
 # Define Jacobian
 #
 
-
-
 retrievalDefInit
 VectorCreate(vars)
 nelemGet( nelem, p_ret_grid )
-
-
+IndexCreate( nelem_f )
+nelemGet( nelem_f, f_grid )
 
 retrievalAddAbsSpecies(
     # species = "O3",
@@ -151,22 +153,25 @@ retrievalAddAbsSpecies(
 
 SparseCreate(sparse_block)
 
-VectorSetConstant(vars, nelem, 1e-12)
+#VectorSetConstant(vars, nelem, 1e-12)
+VectorSetConstant(vars, nelem, 1e-6)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
 
 #VectorSetConstant(vars, nf, 1e-2)
-VectorSetConstant(vars, nelem, 1e-2)
+VectorSetConstant(vars, nelem_f, 1e-2)
 DiagonalMatrix(sparse_block, vars)
 covmat_seAddBlock(block = sparse_block)
 
 MatrixCreate(dense_block)
 #VectorSetConstant(vars, nf, 1e+2)
-VectorSetConstant(vars, nelem, 1e+2)
+VectorSetConstant(vars, nelem_f, 1e+2)
 DiagonalMatrix(dense_block, vars)
 covmat_seAddInverseBlock(block = dense_block)
 
 retrievalDefClose
+
+
 
 # Simulate "measurement vector"
 #
@@ -198,11 +203,9 @@ AgendaSet( inversion_iterate_agenda ){
   jacobianAdjustAndTransform
 }
 
-
 # Let a priori be off with 1 ppm
 #
 Tensor4AddScalar( vmr_field, vmr_field, 1e-6 )
-
 
 # Create xa
 #
@@ -214,19 +217,29 @@ VectorSet( x, [] )
 VectorSet( yf, [] )
 MatrixSet( jacobian, [] )
 
-
 # Or to pre-set x, jacobian and yf
 #
 #Copy( x, xa )
 #MatrixSet( jacobian, [] )
 #AgendaExecute( inversion_iterate_agenda )
 
+
+
+# Extract the square root of the diagonal of the state space covariance matrix.
+VectorCreate(covmat_sx_SqrtDiag)
+covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
+
+Print(covmat_sx)
+Print(covmat_se)
+
 # Run OEM
 OEM(method="gn",
+    x_norm=covmat_sx_SqrtDiag,
     max_iter=5,
     display_progress=1,
     lm_ga_settings=[10,2,2,100,1,99])
 #
+
 Print( oem_errors, 0 )
 
 # Compute averaging kernel matrix
