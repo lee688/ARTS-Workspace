@@ -1,5 +1,6 @@
 # Raw trial by B Lee (ARA Consulting and Techonology)
-# This is for ARTS development version. 
+# This is for ARTS development version.
+# Original code from "arts-dev/controlfiles/artscomponents/oem/".
 
 
 
@@ -36,62 +37,48 @@ AtmosphereSet1D
 IndexSet( stokes_dim, 1 )
 
 
+
 # Frequency and pressure grids
 #
-#NumericCreate( f_start )
-#NumericCreate( f_end )
-#IndexCreate( nf )
 VectorCreate( p_ret_grid )
 IndexCreate( np )
+IndexSet( np, 25 )
 #
-#NumericSet( f_start, 110.436e9 )
-#NumericSet( f_end, 111.236e9 )
-#IndexSet( nf, 801 )
-#IndexSet( np, 81 )
-IndexSet( np, 15 )
-#
-#VectorNLinSpace( f_grid, nf, f_start, f_end )
-#VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
-#VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
-ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
-ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
-#ReadXML( p_ret_grid, "./ClearSky_1D_p_grid.xml" )
-VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
+ReadXML( f_grid, "ClearSky_1D_f_grid.xml" )
+ReadXML( p_grid, "ClearSky_1D_p_grid.xml" )
+Copy( p_ret_grid, p_grid )
+#VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
+
 
 
 # Spectroscopy
 #
-#abs_speciesSet( species=[ "O3" ] )
 abs_speciesSet( species=
 		["H2O-PWR98",
 		 "N2-SelfContStandardType",
 		 "O3",
-		 "O2-PWR98"] ) 
+		 "O2-PWR98"] )
 #
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-#ReadXML( abs_lines, "testdata/ozone_line.xml" )
-ReadXML( abs_lines, "./abs_lines.xml" )
+ReadXML( abs_lines, "testdata_ozone_line.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
 
 # Atmosphere (a priori)
 #
-#AtmRawRead( basename = "testdata/tropical" )
-AtmRawRead( basename = "./ClearSky_1D" )
+AtmRawRead( basename = "ClearSky_1D" )
 AtmFieldsCalc
 #
-#MatrixSetConstant( z_surface, 1, 1, 10e3 )
 MatrixSetConstant( z_surface, 1, 1, 0 )
 #
-#VectorSet( lat_true, [10] )
-#VectorSet( lon_true, [123] )
 VectorSet( lat_true, [0] )
 VectorSet( lon_true, [0] )
 #
 atmfields_checkedCalc
+
 
 
 # Apply HSE
@@ -100,7 +87,6 @@ atmfields_checkedCalc
 #NumericSet( z_hse_accuracy, 0.5 )
 #
 #z_fieldFromHSE
-# Don't apply HSE. 
 
 
 
@@ -109,8 +95,6 @@ atmfields_checkedCalc
 NumericSet( ppath_lmax, -1 )
 StringSet( iy_unit, "RJBT" )
 #
-#MatrixSetConstant( sensor_pos, 1, 1, 15e3 )
-#MatrixSetConstant( sensor_los, 1, 1, 60 )
 MatrixSetConstant( sensor_pos, 1, 1, 0 )
 MatrixSetConstant( sensor_los, 1, 1, 0 )
 #
@@ -139,11 +123,10 @@ sensor_checkedCalc
 retrievalDefInit
 VectorCreate(vars)
 nelemGet( nelem, p_ret_grid )
-IndexCreate( nelem_f )
-nelemGet( nelem_f, f_grid )
+IndexCreate( nf )
+nelemGet( nf, f_grid )
 
 retrievalAddAbsSpecies(
-    # species = "O3",
     species = "H2O-PWR98",
     unit = "vmr",
     g1 = p_ret_grid,
@@ -151,21 +134,30 @@ retrievalAddAbsSpecies(
     g3 = lon_grid
 )
 
+#retrievalAddTemperature (
+#    g1 = p_ret_grid,
+#    g2 = lat_grid,
+#    g3 = lon_grid,
+#		hse = "off"
+#)
+
 SparseCreate(sparse_block)
 
-#VectorSetConstant(vars, nelem, 1e-12)
-VectorSetConstant(vars, nelem, 1e-6)
+# Water VMR
+VectorSetConstant(vars, nelem, 1e-10)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
+# Temperature
+#VectorSetConstant(vars, nelem, 1e-2)
+#DiagonalMatrix(sparse_block, vars)
+#covmat_sxAddBlock(block = sparse_block)
 
-#VectorSetConstant(vars, nf, 1e-2)
-VectorSetConstant(vars, nelem_f, 1e-2)
+VectorSetConstant(vars, nf, 1e-2)
 DiagonalMatrix(sparse_block, vars)
 covmat_seAddBlock(block = sparse_block)
 
 MatrixCreate(dense_block)
-#VectorSetConstant(vars, nf, 1e+2)
-VectorSetConstant(vars, nelem_f, 1e+2)
+VectorSetConstant(vars, nf, 1e+2)
 DiagonalMatrix(dense_block, vars)
 covmat_seAddInverseBlock(block = dense_block)
 
@@ -176,7 +168,17 @@ retrievalDefClose
 # Simulate "measurement vector"
 #
 cloudbox_checkedCalc
-yCalc
+#yCalc
+
+
+
+# Save the simulated results in an xml file.
+#WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
+
+
+
+# Disregarding simulated results, give y the Bosung observation values.
+ReadXML(y, "BosungObservations.xml")
 
 
 
@@ -203,19 +205,32 @@ AgendaSet( inversion_iterate_agenda ){
   jacobianAdjustAndTransform
 }
 
-# Let a priori be off with 1 ppm
+
+
+# Let a priori VMR be off with 1 ppm
 #
 Tensor4AddScalar( vmr_field, vmr_field, 1e-6 )
+
+
+
+# Let a priori temperature be off by 1 K.
+Tensor3AddScalar( t_field, t_field, 1 )
+
+
 
 # Create xa
 #
 xaStandard
+
+
 
 # x, jacobian and yf must be initialised (or pre-calculated as shown below)
 #
 VectorSet( x, [] )
 VectorSet( yf, [] )
 MatrixSet( jacobian, [] )
+
+
 
 # Or to pre-set x, jacobian and yf
 #
@@ -229,8 +244,7 @@ MatrixSet( jacobian, [] )
 VectorCreate(covmat_sx_SqrtDiag)
 covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
 
-Print(covmat_sx)
-Print(covmat_se)
+
 
 # Run OEM
 OEM(method="gn",
@@ -238,9 +252,12 @@ OEM(method="gn",
     max_iter=5,
     display_progress=1,
     lm_ga_settings=[10,2,2,100,1,99])
-#
+
+
 
 Print( oem_errors, 0 )
+
+
 
 # Compute averaging kernel matrix
 #
@@ -257,6 +274,13 @@ covmat_soCalc
 # Extract observation errors
 #
 retrievalErrorsExtract
+
+
+
+# Save the retrieval results in xml files.
+WriteXML( "ascii", x, "ClearSky_1D_OEM_Retrieval_WaterVMR.xml" ) # Retrieved water VMR
+WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_Retrieval_p_grid.xml") # Retrieval grid
+
 
 
 }

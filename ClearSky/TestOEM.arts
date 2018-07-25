@@ -42,7 +42,10 @@ VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
 
 # Spectroscopy
 #
-abs_speciesSet( species=[ "O3" ] )
+abs_speciesSet( species=["H2O-PWR98",
+		 	 "N2-SelfContStandardType",
+			 "O3",
+			 "O2-PWR98"] ) 
 #
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
@@ -57,20 +60,20 @@ abs_lines_per_speciesCreateFromLines
 AtmRawRead( basename = "./ClearSky_1D" )
 AtmFieldsCalc
 #
-MatrixSetConstant( z_surface, 1, 1, 10e3 )
+MatrixSetConstant( z_surface, 1, 1, 0 )
 #
-VectorSet( lat_true, [10] )
-VectorSet( lon_true, [123] )
+VectorSet( lat_true, [0] )
+VectorSet( lon_true, [0] )
 #
 atmfields_checkedCalc
 
 
 # Apply HSE
 #
-NumericSet( p_hse, 100e2 )
-NumericSet( z_hse_accuracy, 0.5 )
+#NumericSet( p_hse, 100e2 )
+#NumericSet( z_hse_accuracy, 0.5 )
 #
-z_fieldFromHSE
+#z_fieldFromHSE
 
 
 # RT
@@ -78,8 +81,8 @@ z_fieldFromHSE
 NumericSet( ppath_lmax, -1 )
 StringSet( iy_unit, "RJBT" )
 #
-MatrixSetConstant( sensor_pos, 1, 1, 15e3 )
-MatrixSetConstant( sensor_los, 1, 1, 60 )
+MatrixSetConstant( sensor_pos, 1, 1, 0 )
+MatrixSetConstant( sensor_los, 1, 1, 0 )
 #
 VectorSetConstant( sensor_time, 1, 0 )
 
@@ -109,7 +112,7 @@ nelemGet( nelem, p_ret_grid )
 
 
 retrievalAddAbsSpecies(
-    species = "O3",
+    species = "H2O-PWR98",
     unit = "vmr",
     g1 = p_ret_grid,
     g2 = lat_grid,
@@ -137,8 +140,6 @@ retrievalDefClose
 #
 cloudbox_checkedCalc
 yCalc
-
-
 
 # Iteration agenda
 #

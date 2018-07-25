@@ -1,6 +1,6 @@
 # Raw trial by B Lee (ARA Consulting and Techonology)
-# The following comments come from the previous code on which my code was written. 
-# This is for ARTS development version. 
+# The following comments come from the previous code on which my code was written.
+# This is for ARTS development version.
 
 
 
@@ -44,9 +44,9 @@ Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
 # standard surface agenda (i.e., make use of surface_rtprop_agenda)
 Copy( iy_surface_agenda, iy_surface_agenda__UseSurfaceRtprop )
 
-# Planck as blackbody radiation. 
+# Planck as blackbody radiation.
 #Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
-# This was included in the version 2.2, but not in this development version. 
+# This was included in the version 2.2, but not in this development version.
 
 # on-the-fly absorption
 Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
@@ -70,10 +70,10 @@ ReadXML( abs_lines, "./abs_lines.xml" )
 #VectorNLinSpace( f_grid, 5, 320e9, 322e9 )
 #VectorSet( f_grid, [183.31e9] )
 
-# Create a frequency grid 
+# Create a frequency grid
 # ---
-ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
-#IndexSet( f_index, 0 ) 
+ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" )
+#IndexSet( f_index, 0 )
 
 # A pressure grid rougly matching 0 to 80 km, in steps of 2 km.
 # ---
@@ -83,15 +83,15 @@ ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
 # Definition of species
 # ---
 #abs_speciesSet( species=
-#            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O", 
+#            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O",
 #             "N2-SelfContStandardType",
 #             "O3",
-#             "O2-SelfContStandardType"] ) 
+#             "O2-SelfContStandardType"] )
 abs_speciesSet( species=
 		["H2O-PWR98",
 		 "N2-SelfContStandardType",
 		 "O3",
-		 "O2-PWR98"] ) 
+		 "O2-PWR98"] )
 
 # Sort the line file according to species
 # ---
@@ -99,10 +99,10 @@ abs_lines_per_speciesCreateFromLines
 
 # Atmospheric scenario
 # ---
-#AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
+#AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species,
 #		"./ClearSky_1D" )
 AtmRawRead( basename = "./ClearSky_1D" )
-# This is another difference from version 2.2. 
+# This is another difference from version 2.2.
 
 # Weakly reflecting surface
 # ---
@@ -163,11 +163,11 @@ jacobianInit
 VectorCreate(g1) # Pressure retrieval grid
 VectorCreate(g2) # Latitude retrieval grid
 VectorCreate(g3) # Longitude retrieval grid
-Copy(g1, p_grid) 
-Copy(g2, lat_grid) 
-Copy(g3, lon_grid) 
+Copy(g1, p_grid)
+Copy(g2, lat_grid)
+Copy(g3, lon_grid)
 jacobianAddTemperature( jacobian_quantities, jacobian_agenda, atmosphere_dim,
-	p_grid, lat_grid, lon_grid, g1, g2, g3, "off", "analytical", 0.1) 
+	p_grid, lat_grid, lon_grid, g1, g2, g3, "off", "analytical", 0.1)
 jacobianAddAbsSpecies( jacobian_quantities, jacobian_agenda, atmosphere_dim,
 	p_grid, lat_grid, lon_grid, g1, g2, g3, "H2O-PWR98")
 jacobianClose
@@ -179,7 +179,7 @@ jacobianClose
 
 # Clearsky = No scattering
 cloudboxOff
-# This line is moved down here because somehow it needs jacobian inputs. 
+# This line is moved down here because somehow it needs jacobian inputs.
 
 
 
@@ -205,7 +205,7 @@ yCalc
 WriteXML( "ascii", y, "ClearSky_1D_Tb.xml" ) # Brightness temperature
 WriteXML("ascii", z_field, "ClearSky_1D_z_field.xml") # Geometric altitude used
 WriteXML("ascii", t_field, "ClearSky_1D_t_field.xml") # Temperature profile used
-WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used 
+WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used
 WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
 
 #WriteXML( "ascii", odepth, "ClearSky_1D_odp.xml" )
@@ -218,4 +218,3 @@ WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
 #Compare( odepth, yREFERENCE, 1e-3 )
 
 } # End of Main
- 
