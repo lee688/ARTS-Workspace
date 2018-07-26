@@ -28,24 +28,25 @@ IndexSet( stokes_dim, 1 )
 
 # Frequency and pressure grids
 #
+NumericCreate( f_start )
+NumericCreate( f_end )
 IndexCreate( nf )
 VectorCreate( p_ret_grid )
 IndexCreate( np )
 #
-IndexSet( nf, 22 )
-IndexSet( np, 25 )
+NumericSet( f_start, 110.436e9 )
+NumericSet( f_end, 111.236e9 )
+IndexSet( nf, 801 )
+IndexSet( np, 81 )
 #
-ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
-ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
-VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
+VectorNLinSpace( f_grid, nf, f_start, f_end )
+VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
+VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
 
 
 # Spectroscopy
 #
-abs_speciesSet( species=["H2O-PWR98",
-		 	 "N2-SelfContStandardType",
-			 "O3",
-			 "O2-PWR98"] ) 
+abs_speciesSet( species=[ "O3" ] )
 #
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
@@ -57,23 +58,23 @@ abs_lines_per_speciesCreateFromLines
 
 # Atmosphere (a priori)
 #
-AtmRawRead( basename = "./ClearSky_1D" )
+AtmRawRead( basename = "testdata/tropical" )
 AtmFieldsCalc
 #
-MatrixSetConstant( z_surface, 1, 1, 0 )
+MatrixSetConstant( z_surface, 1, 1, 10e3 )
 #
-VectorSet( lat_true, [0] )
-VectorSet( lon_true, [0] )
+VectorSet( lat_true, [10] )
+VectorSet( lon_true, [123] )
 #
 atmfields_checkedCalc
 
 
 # Apply HSE
 #
-#NumericSet( p_hse, 100e2 )
-#NumericSet( z_hse_accuracy, 0.5 )
+NumericSet( p_hse, 100e2 )
+NumericSet( z_hse_accuracy, 0.5 )
 #
-#z_fieldFromHSE
+z_fieldFromHSE
 
 
 # RT
@@ -81,8 +82,8 @@ atmfields_checkedCalc
 NumericSet( ppath_lmax, -1 )
 StringSet( iy_unit, "RJBT" )
 #
-MatrixSetConstant( sensor_pos, 1, 1, 0 )
-MatrixSetConstant( sensor_los, 1, 1, 0 )
+MatrixSetConstant( sensor_pos, 1, 1, 15e3 )
+MatrixSetConstant( sensor_los, 1, 1, 60 )
 #
 VectorSetConstant( sensor_time, 1, 0 )
 
@@ -111,13 +112,21 @@ nelemGet( nelem, p_ret_grid )
 
 
 
-retrievalAddAbsSpecies(
-    species = "H2O-PWR98",
-    unit = "vmr",
+retrievalAddTemperature (
     g1 = p_ret_grid,
     g2 = lat_grid,
-    g3 = lon_grid
-)
+    g3 = lon_grid,
+		hse = "on"   )
+
+
+
+#retrievalAddAbsSpecies(
+#    species = "O3",
+#    unit = "vmr",
+#    g1 = p_ret_grid,
+#    g2 = lat_grid,
+#    g3 = lon_grid
+#)
 
 SparseCreate(sparse_block)
 
@@ -140,6 +149,8 @@ retrievalDefClose
 #
 cloudbox_checkedCalc
 yCalc
+
+
 
 # Iteration agenda
 #

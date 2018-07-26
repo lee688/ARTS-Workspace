@@ -131,32 +131,30 @@ retrievalAddAbsSpecies(
     unit = "vmr",
     g1 = p_ret_grid,
     g2 = lat_grid,
-    g3 = lon_grid
-)
+    g3 = lon_grid   )
 
-#retrievalAddTemperature (
-#    g1 = p_ret_grid,
-#    g2 = lat_grid,
-#    g3 = lon_grid,
-#		hse = "off"
-#)
+retrievalAddTemperature (
+    g1 = p_ret_grid,
+    g2 = lat_grid,
+    g3 = lon_grid,
+		hse = "off"   )
 
 SparseCreate(sparse_block)
+MatrixCreate(dense_block)
 
 # Water VMR
 VectorSetConstant(vars, nelem, 1e-10)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
 # Temperature
-#VectorSetConstant(vars, nelem, 1e-2)
-#DiagonalMatrix(sparse_block, vars)
-#covmat_sxAddBlock(block = sparse_block)
+VectorSetConstant(vars, nelem, 1e-2)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
 
 VectorSetConstant(vars, nf, 1e-2)
 DiagonalMatrix(sparse_block, vars)
 covmat_seAddBlock(block = sparse_block)
 
-MatrixCreate(dense_block)
 VectorSetConstant(vars, nf, 1e+2)
 DiagonalMatrix(dense_block, vars)
 covmat_seAddInverseBlock(block = dense_block)
@@ -168,12 +166,12 @@ retrievalDefClose
 # Simulate "measurement vector"
 #
 cloudbox_checkedCalc
-#yCalc
+yCalc
 
 
 
 # Save the simulated results in an xml file.
-#WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
+WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
 
 
 
@@ -247,7 +245,7 @@ covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
 
 
 # Run OEM
-OEM(method="gn",
+OEM(method="li",
     x_norm=covmat_sx_SqrtDiag,
     max_iter=5,
     display_progress=1,
@@ -278,7 +276,7 @@ retrievalErrorsExtract
 
 
 # Save the retrieval results in xml files.
-WriteXML( "ascii", x, "ClearSky_1D_OEM_Retrieval_WaterVMR.xml" ) # Retrieved water VMR
+WriteXML( "ascii", x, "ClearSky_1D_OEM_Retrieval.xml" ) # Retrievals
 WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_Retrieval_p_grid.xml") # Retrieval grid
 
 
