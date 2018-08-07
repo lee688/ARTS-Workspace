@@ -1,0 +1,284 @@
+# Raw trial by B Lee (ARA Consulting and Techonology)
+# This is for ARTS development version.
+# Original code from "arts-dev/controlfiles/artscomponents/oem/".
+
+
+
+
+
+#DEFINITIONS:  -*-sh-*-
+#
+# Author: Patrick Eriksson
+
+Arts2 {
+
+INCLUDE "general/general.arts"
+INCLUDE "general/continua.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+
+
+# Agendas to use
+#
+Copy( abs_xsec_agenda,            abs_xsec_agenda__noCIA              )
+Copy( propmat_clearsky_agenda,    propmat_clearsky_agenda__OnTheFly   )
+Copy( iy_main_agenda,             iy_main_agenda__Emission            )
+Copy( iy_space_agenda,            iy_space_agenda__CosmicBackground   )
+Copy( iy_surface_agenda,          iy_surface_agenda__UseSurfaceRtprop )
+Copy( ppath_agenda,               ppath_agenda__FollowSensorLosPath   )
+Copy( ppath_step_agenda,          ppath_step_agenda__GeometricPath    )
+
+
+
+# Basic settings
+#
+AtmosphereSet1D
+IndexSet( stokes_dim, 1 )
+
+
+
+# Frequency and pressure grids
+#
+VectorCreate( p_ret_grid )
+IndexCreate( np )
+IndexSet( np, 25 )
+#
+ReadXML( f_grid, "ClearSky_1D_f_grid.xml" )
+ReadXML( p_grid, "ClearSky_1D_p_grid.xml" )
+Copy( p_ret_grid, p_grid )
+#VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
+
+
+
+# Spectroscopy
+#
+abs_speciesSet( species=
+		["H2O-PWR98",
+		 "N2-SelfContStandardType",
+		 "O3",
+		 "O2-PWR98"] )
+#
+ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
+abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
+#
+ReadXML( abs_lines, "testdata_ozone_line.xml" )
+abs_lines_per_speciesCreateFromLines
+
+
+
+# Atmosphere (a priori)
+#
+AtmRawRead( basename = "ClearSky_1D" )
+AtmFieldsCalc
+#
+MatrixSetConstant( z_surface, 1, 1, 0 )
+#
+VectorSet( lat_true, [0] )
+VectorSet( lon_true, [0] )
+#
+atmfields_checkedCalc
+
+
+
+# Apply HSE
+#
+#NumericSet( p_hse, 100e2 )
+#NumericSet( z_hse_accuracy, 0.5 )
+#
+#z_fieldFromHSE
+
+
+
+# RT
+#
+NumericSet( ppath_lmax, -1 )
+StringSet( iy_unit, "RJBT" )
+#
+MatrixSetConstant( sensor_pos, 1, 1, 0 )
+MatrixSetConstant( sensor_los, 1, 1, 0 )
+#
+VectorSetConstant( sensor_time, 1, 0 )
+
+
+
+# Deactive parts not used and perform all remaining tests
+#
+jacobianOff
+cloudboxOff
+sensorOff
+#
+abs_xsec_agenda_checkedCalc
+propmat_clearsky_agenda_checkedCalc
+atmgeom_checkedCalc
+sensor_checkedCalc
+
+
+
+# Covariance matrices covmat_sx, covmat_se and their inverse.
+#
+# Define Jacobian
+#
+
+retrievalDefInit
+VectorCreate(vars)
+nelemGet( nelem, p_ret_grid )
+IndexCreate( nf )
+nelemGet( nf, f_grid )
+
+retrievalAddAbsSpecies(
+    species = "H2O-PWR98",
+    unit = "vmr",
+    g1 = p_ret_grid,
+    g2 = lat_grid,
+    g3 = lon_grid   )
+
+retrievalAddTemperature (
+    g1 = p_ret_grid,
+    g2 = lat_grid,
+    g3 = lon_grid,
+		hse = "off"   )
+
+SparseCreate(sparse_block)
+MatrixCreate(dense_block)
+
+# Water VMR
+VectorSetConstant(vars, nelem, 1e-10)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
+# Temperature
+VectorSetConstant(vars, nelem, 1e-2)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
+
+VectorSetConstant(vars, nf, 1e-2)
+DiagonalMatrix(sparse_block, vars)
+covmat_seAddBlock(block = sparse_block)
+
+VectorSetConstant(vars, nf, 1e+2)
+DiagonalMatrix(dense_block, vars)
+covmat_seAddInverseBlock(block = dense_block)
+
+retrievalDefClose
+
+
+
+# Simulate "measurement vector"
+#
+cloudbox_checkedCalc
+yCalc
+
+
+
+# Save the simulated results in an xml file.
+WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
+
+
+
+# Disregarding simulated results, give y the Bosung observation values.
+ReadXML(y, "BosungObservations.xml")
+
+
+
+# Iteration agenda
+#
+AgendaSet( inversion_iterate_agenda ){
+
+  Ignore(inversion_iteration_counter)
+  # Map x to ARTS' variables
+  x2artsStandard
+
+  # To be safe, rerun checks dealing with the atmosphere
+  atmfields_checkedCalc
+  atmgeom_checkedCalc
+
+  # Calculate yf and Jacobian matching x.
+  yCalc( y=yf )
+
+  # Add baseline term
+  VectorAddVector( yf, yf, y_baseline )
+
+  # This method takes cares of some "fixes" that are needed to get the Jacobian
+  # right for iterative solutions. No need to call this WSM for linear inversions.
+  jacobianAdjustAndTransform
+}
+
+
+
+# Let a priori VMR be off with 1 ppm
+#
+Tensor4AddScalar( vmr_field, vmr_field, 1e-6 )
+
+
+
+# Let a priori temperature be off by 1 K.
+Tensor3AddScalar( t_field, t_field, 1 )
+
+
+
+# Create xa
+#
+xaStandard
+
+
+
+# x, jacobian and yf must be initialised (or pre-calculated as shown below)
+#
+VectorSet( x, [] )
+VectorSet( yf, [] )
+MatrixSet( jacobian, [] )
+
+
+
+# Or to pre-set x, jacobian and yf
+#
+#Copy( x, xa )
+#MatrixSet( jacobian, [] )
+#AgendaExecute( inversion_iterate_agenda )
+
+
+
+# Extract the square root of the diagonal of the state space covariance matrix.
+VectorCreate(covmat_sx_SqrtDiag)
+covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
+
+
+
+# Run OEM
+OEM(method="li",
+    x_norm=covmat_sx_SqrtDiag,
+    max_iter=5,
+    display_progress=1,
+    lm_ga_settings=[10,2,2,100,1,99])
+
+
+
+Print( oem_errors, 0 )
+
+
+
+# Compute averaging kernel matrix
+#
+avkCalc
+
+# Compute smoothing error covariance matrix
+#
+covmat_ssCalc
+
+# Compute observation system error covariance matrix
+#
+covmat_soCalc
+
+# Extract observation errors
+#
+retrievalErrorsExtract
+
+
+
+# Save the retrieval results in xml files.
+WriteXML( "ascii", x, "ClearSky_1D_OEM_Retrieval.xml" ) # Retrievals
+WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_Retrieval_p_grid.xml") # Retrieval grid
+
+
+
+}

@@ -1,0 +1,214 @@
+# Raw trial by B Lee (ARA Consulting and Techonology)
+# The following comments come from the previous code on which my code was written. 
+# This is for ARTS version 2.2. 
+
+
+
+
+
+#DEFINITIONS:  -*-sh-*-
+#
+# Demonstration and test of simple ARTS 1D, 2D and 3D clear sky calculations.
+#
+# Observations from a satellite is treated, with three viewing directions:
+#   1: Cold space (ie. above the model atmosphere)
+#   2: Limb sounding
+#   3: Downward observation.
+#
+# For the test sequence (ie. "make check") this is a first test on that the
+# full chain around yCalc is working. Calculation of optical depth as an
+# auxilary variable is included and tested.
+#
+# Author: Patrick Eriksson
+
+
+
+
+
+Arts2 {
+
+INCLUDE "general/general.arts"
+INCLUDE "general/continua.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+# Agenda for scalar gas absorption calculation
+Copy(abs_xsec_agenda, abs_xsec_agenda__noCIA)
+
+# (standard) emission calculation
+Copy( iy_main_agenda, iy_main_agenda__Emission )
+
+# cosmic background radiation
+Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
+
+# standard surface agenda (i.e., make use of surface_rtprop_agenda)
+Copy( iy_surface_agenda, iy_surface_agenda__UseSurfaceRtprop )
+
+# Planck as blackbody radiation
+Copy( blackbody_radiation_agenda, blackbody_radiation_agenda__Planck )
+
+# on-the-fly absorption
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
+
+# sensor-only path
+Copy( ppath_agenda, ppath_agenda__FollowSensorLosPath )
+
+# no refraction
+Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
+
+# Number of Stokes components to be computed
+IndexSet( stokes_dim, 1 )
+
+# Clearsky = No scattering
+cloudboxOff
+
+
+
+
+
+# Read a line file and a matching small frequency grid
+# ---
+ReadXML( abs_lines, "./abs_lines.xml" )
+#VectorNLinSpace( f_grid, 5, 320e9, 322e9 )
+#VectorSet( f_grid, [183.31e9] )
+
+# Create a frequency grid 
+# ---
+ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" ) 
+#IndexSet( f_index, 0 ) 
+
+# A pressure grid rougly matching 0 to 80 km, in steps of 2 km.
+# ---
+#VectorNLogSpace( p_grid, 41, 1000e2, 1 )
+ReadXML( p_grid, "./ClearSky_1D_p_grid.xml" )
+
+# Definition of species
+# ---
+#abs_speciesSet( species=
+#            ["H2O-SelfContStandardType, H2O-ForeignContStandardType, H2O", 
+#             "N2-SelfContStandardType",
+#             "O3",
+#             "O2-SelfContStandardType"] ) 
+abs_speciesSet( species=
+		["H2O-PWR98",
+		 "N2-SelfContStandardType",
+		 "O3",
+		 "O2-PWR98"] ) 
+
+# Sort the line file according to species
+# ---
+abs_lines_per_speciesCreateFromLines
+
+# Atmospheric scenario
+# ---
+AtmRawRead( t_field_raw, z_field_raw, vmr_field_raw, abs_species, 
+		"./ClearSky_1D" )
+
+# Weakly reflecting surface
+# ---
+VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
+Copy( surface_rtprop_agenda,
+      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
+
+# No sensor properties
+# ---
+sensorOff
+
+
+# We select here to use Rayleigh-Jean brightness temperatures
+# ---
+StringSet( iy_unit, "RJBT" )
+#StringSet( iy_unit, "PlanckBT" )
+
+# Extract radiative background and optical depth as auxiliary variables
+# ---
+#ArrayOfStringSet( iy_aux_vars, [ "Optical depth", "Radiative background" ] )
+
+# Create vector container for the optical depth
+#VectorCreate( odepth )
+
+
+
+
+
+#########################################################################
+# 1D
+#########################################################################
+
+# Atmosphere and surface
+# ---
+AtmosphereSet1D
+AtmFieldsCalc
+Extract( z_surface, z_field, 0 )
+Extract( t_surface, t_field, 0 )
+
+# Definition of sensor position and LOS
+# ---
+#MatrixSetConstant( sensor_pos, 3, 1, 600e3 )
+#MatrixSet( sensor_los, [ 95; 113; 135] )
+#MatrixSetConstant( sensor_pos, 1, 1, 0 )
+#MatrixSet( sensor_los, [0] )
+ReadXML( sensor_los, "./ClearSky_1D_sensor_los.xml" )
+ReadXML( sensor_pos, "./ClearSky_1D_sensor_pos.xml" )
+Print( sensor_pos, 1 )
+Print( sensor_los, 1 )
+
+
+
+
+
+#Jacobian calculation
+# ---
+jacobianInit
+VectorCreate(g1) # Pressure retrieval grid
+VectorCreate(g2) # Latitude retrieval grid
+VectorCreate(g3) # Longitude retrieval grid
+Copy(g1, p_grid) 
+Copy(g2, lat_grid) 
+Copy(g3, lon_grid) 
+jacobianAddTemperature( jacobian_quantities, jacobian_agenda, atmosphere_dim,
+	p_grid, lat_grid, lon_grid, g1, g2, g3, "off", "analytical", 0.1) 
+jacobianAddAbsSpecies( jacobian_quantities, jacobian_agenda, atmosphere_dim,
+	p_grid, lat_grid, lon_grid, g1, g2, g3, "H2O-PWR98")
+jacobianClose
+#jacobianCalcAbsSpeciesAnalytical
+
+
+
+
+
+# Perform RT calculations
+# ---
+abs_xsec_agenda_checkedCalc
+propmat_clearsky_agenda_checkedCalc
+atmfields_checkedCalc
+atmgeom_checkedCalc
+cloudbox_checkedCalc
+sensor_checkedCalc
+yCalc
+
+
+
+
+
+# OK?
+# ---
+#Extract( odepth, y_aux, 0 )
+
+WriteXML( "ascii", y, "ClearSky_1D_Tb.xml" ) # Brightness temperature
+WriteXML("ascii", z_field, "ClearSky_1D_z_field.xml") # Geometric altitude used
+WriteXML("ascii", t_field, "ClearSky_1D_t_field.xml") # Temperature profile used
+WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used 
+WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
+
+#WriteXML( "ascii", odepth, "ClearSky_1D_odp.xml" )
+#WriteXML( "ascii", y, "yREFERENCE_1D.xml" )
+#WriteXML( "ascii", odepth, "y_auxREFERENCE_1D.xml" )
+#VectorCreate( yREFERENCE )
+#ReadXML( yREFERENCE, "yREFERENCE_1D.xml" )
+#Compare( y, yREFERENCE, 1e-2 )
+#ReadXML( yREFERENCE, "y_auxREFERENCE_1D.xml" )
+#Compare( odepth, yREFERENCE, 1e-3 )
+
+} # End of Main
+ 
