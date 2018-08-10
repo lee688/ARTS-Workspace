@@ -114,7 +114,6 @@ Copy( surface_rtprop_agenda,
 # ---
 sensorOff
 
-
 # We select here to use Rayleigh-Jean brightness temperatures
 # ---
 StringSet( iy_unit, "RJBT" )
@@ -152,8 +151,6 @@ ReadXML( sensor_los, "./ClearSky_1D_sensor_los.xml" )
 ReadXML( sensor_pos, "./ClearSky_1D_sensor_pos.xml" )
 Print( sensor_pos, 1 )
 Print( sensor_los, 1 )
-
-
 
 
 

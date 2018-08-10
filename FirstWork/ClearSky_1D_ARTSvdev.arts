@@ -70,10 +70,6 @@ ReadXML( abs_lines, "./abs_lines.xml" )
 #VectorNLinSpace( f_grid, 5, 320e9, 322e9 )
 #VectorSet( f_grid, [183.31e9] )
 
-# Create a frequency grid
-# ---
-ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" )
-#IndexSet( f_index, 0 )
 
 # A pressure grid rougly matching 0 to 80 km, in steps of 2 km.
 # ---
@@ -110,11 +106,6 @@ VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
 Copy( surface_rtprop_agenda,
       surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
 
-# No sensor properties
-# ---
-sensorOff
-
-
 # We select here to use Rayleigh-Jean brightness temperatures
 # ---
 StringSet( iy_unit, "RJBT" )
@@ -142,7 +133,18 @@ AtmFieldsCalc
 Extract( z_surface, z_field, 0 )
 Extract( t_surface, t_field, 0 )
 
-# Definition of sensor position and LOS
+
+
+
+
+### Sensor parameters
+
+# Frequency
+# ---
+ReadXML( f_grid, "./ClearSky_1D_f_grid.xml" )
+#IndexSet( f_index, 0 )
+
+# Sensor position and LOS
 # ---
 #MatrixSetConstant( sensor_pos, 3, 1, 600e3 )
 #MatrixSet( sensor_los, [ 95; 113; 135] )
@@ -150,8 +152,22 @@ Extract( t_surface, t_field, 0 )
 #MatrixSet( sensor_los, [0] )
 ReadXML( sensor_los, "./ClearSky_1D_sensor_los.xml" )
 ReadXML( sensor_pos, "./ClearSky_1D_sensor_pos.xml" )
-Print( sensor_pos, 1 )
-Print( sensor_los, 1 )
+
+# No sensor properties
+# ---
+sensorOff
+
+# Include Bosung sensor characteristics. 
+# ---
+#IndexSet(antenna_dim, 1)
+#MatrixSet(antenna_dlos, [0])
+#AntennaConstantGaussian1D(antenna_dim, mblock_dlos_grid, antenna_response, antenna_dlos, 20, 6.3, 3, 0.1)
+#MatrixSet(mblock_dlos_grid, [-10; -9; -8; -7; -6; -5; -4; -3; -2; -1; 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10])
+#antenna_responseGaussian(antenna_response, 6.3)
+#antenna_responseVaryingGaussian(antenna_response, 0.125, 3, 0.1, 38, 22e9, 59e9)
+#IndexSet(sensor_norm, 1)
+#sensor_responseInit
+#sensor_responseAntenna
 
 
 
@@ -202,11 +218,11 @@ yCalc
 # ---
 #Extract( odepth, y_aux, 0 )
 
-WriteXML( "ascii", y, "ClearSky_1D_Tb.xml" ) # Brightness temperature
+WriteXML("ascii", y, "ClearSky_1D_Tb.xml") # Brightness temperature
 WriteXML("ascii", z_field, "ClearSky_1D_z_field.xml") # Geometric altitude used
 WriteXML("ascii", t_field, "ClearSky_1D_t_field.xml") # Temperature profile used
 WriteXML("ascii", vmr_field, "ClearSky_1D_vmr_field.xml") # Volume mixing ratio profile used
-WriteXML( "ascii", jacobian, "ClearSky_1D_jacobian.xml" ) # Jacobian calculated
+WriteXML("ascii", jacobian, "ClearSky_1D_jacobian.xml") # Jacobian calculated
 
 #WriteXML( "ascii", odepth, "ClearSky_1D_odp.xml" )
 #WriteXML( "ascii", y, "yREFERENCE_1D.xml" )
