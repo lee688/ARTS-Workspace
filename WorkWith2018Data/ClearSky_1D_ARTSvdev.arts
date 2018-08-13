@@ -110,10 +110,6 @@ VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
 Copy( surface_rtprop_agenda,
       surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
 
-# No sensor properties
-# ---
-sensorOff
-
 # We select here to use Rayleigh-Jean brightness temperatures
 # ---
 StringSet( iy_unit, "RJBT" )
@@ -149,10 +145,24 @@ Extract( t_surface, t_field, 0 )
 #MatrixSet( sensor_los, [0] )
 ReadXML( sensor_los, "./ClearSky_1D_sensor_los.xml" )
 ReadXML( sensor_pos, "./ClearSky_1D_sensor_pos.xml" )
-Print( sensor_pos, 1 )
-Print( sensor_los, 1 )
 
 
+
+
+
+# No sensor properties
+# ---
+#sensorOff
+
+# Bosung radiometer's antenna characteristics. 
+# ---
+ReadXML(antenna_response, "./ClearSky_1D_antenna_response.xml")
+ReadXML(mblock_dlos_grid, "./ClearSky_1D_mblock_dlos_grid.xml")
+IndexSet(sensor_norm, 1)
+IndexSet(antenna_dim, 1)
+MatrixSet(antenna_dlos, [0])
+sensor_responseInit
+sensor_responseAntenna
 
 #Jacobian calculation
 # ---
