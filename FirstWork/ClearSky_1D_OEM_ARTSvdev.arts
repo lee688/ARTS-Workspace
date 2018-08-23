@@ -62,7 +62,8 @@ abs_speciesSet( species=
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-ReadXML( abs_lines, "testdata_ozone_line.xml" )
+#ReadXML( abs_lines, "testdata_ozone_line.xml" )
+ReadXML( abs_lines, "abs_lines.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
@@ -176,7 +177,7 @@ WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
 
 
 # Disregarding simulated results, give y the Bosung observation values.
-ReadXML(y, "BosungObservations.xml")
+# ReadXML(y, "BosungObservations.xml")
 
 
 
@@ -245,7 +246,7 @@ covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
 
 
 # Run OEM
-OEM(method="li",
+OEM(method="gn",
     x_norm=covmat_sx_SqrtDiag,
     max_iter=5,
     display_progress=1,
