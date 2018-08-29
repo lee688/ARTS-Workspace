@@ -1,0 +1,5 @@
+Record,DateTime,100,RecordType,Title
+     1,07/13/2018 00:04:33,101,401,Temperature (K)
+     2,07/13/2018 00:04:33,101,402,Vapor Density (g/m^3)
+     3,07/13/2018 00:04:33,101,403,Liquid (g/m^3)
+     4,07/13/2018 00:04:33,101,404,Relative Humidity (%)
