@@ -112,21 +112,13 @@ nelemGet( nelem, p_ret_grid )
 
 
 
-retrievalAddTemperature (
+retrievalAddAbsSpecies(
+    species = "O3",
+    unit = "vmr",
     g1 = p_ret_grid,
     g2 = lat_grid,
-    g3 = lon_grid,
-		hse = "on"   )
-
-
-
-#retrievalAddAbsSpecies(
-#    species = "O3",
-#    unit = "vmr",
-#    g1 = p_ret_grid,
-#    g2 = lat_grid,
-#    g3 = lon_grid
-#)
+    g3 = lon_grid
+)
 
 SparseCreate(sparse_block)
 

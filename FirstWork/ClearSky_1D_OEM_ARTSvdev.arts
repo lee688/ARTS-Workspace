@@ -127,6 +127,7 @@ nelemGet( nelem, p_ret_grid )
 IndexCreate( nf )
 nelemGet( nf, f_grid )
 
+# Retrieve water VMR
 retrievalAddAbsSpecies(
     species = "H2O-PWR98",
     unit = "vmr",
@@ -134,6 +135,7 @@ retrievalAddAbsSpecies(
     g2 = lat_grid,
     g3 = lon_grid   )
 
+# Retrieve temperature
 retrievalAddTemperature (
     g1 = p_ret_grid,
     g2 = lat_grid,
