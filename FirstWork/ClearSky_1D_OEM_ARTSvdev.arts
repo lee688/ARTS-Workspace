@@ -122,10 +122,13 @@ sensor_checkedCalc
 #
 
 retrievalDefInit
+
 VectorCreate(vars)
 nelemGet( nelem, p_ret_grid )
 IndexCreate( nf )
 nelemGet( nf, f_grid )
+
+SparseCreate(sparse_block)
 
 # Retrieve water VMR
 retrievalAddAbsSpecies(
@@ -135,24 +138,24 @@ retrievalAddAbsSpecies(
     g2 = lat_grid,
     g3 = lon_grid   )
 
-# Retrieve temperature
-retrievalAddTemperature (
-    g1 = p_ret_grid,
-    g2 = lat_grid,
-    g3 = lon_grid,
-		hse = "off"   )
-
-SparseCreate(sparse_block)
-MatrixCreate(dense_block)
-
-# Water VMR
 VectorSetConstant(vars, nelem, 1e-10)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
-# Temperature
-VectorSetConstant(vars, nelem, 1e-2)
-DiagonalMatrix(sparse_block, vars)
-covmat_sxAddBlock(block = sparse_block)
+
+# Retrieve temperature
+#retrievalAddTemperature (
+#    g1 = p_ret_grid,
+#    g2 = lat_grid,
+#    g3 = lon_grid,
+#    hse = "off"   )
+#
+#VectorSetConstant(vars, nelem, 1e-2)
+#DiagonalMatrix(sparse_block, vars)
+#covmat_sxAddBlock(block = sparse_block)
+
+
+
+MatrixCreate(dense_block)
 
 VectorSetConstant(vars, nf, 1e-2)
 DiagonalMatrix(sparse_block, vars)
