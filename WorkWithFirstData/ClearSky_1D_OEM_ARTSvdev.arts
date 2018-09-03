@@ -62,8 +62,8 @@ abs_speciesSet( species=
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-#ReadXML( abs_lines, "testdata_ozone_line.xml" )
-ReadXML( abs_lines, "abs_lines.xml" )
+ReadXML( abs_lines, "testdata_ozone_line.xml" )
+#ReadXML( abs_lines, "abs_lines.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
@@ -131,27 +131,27 @@ nelemGet( nf, f_grid )
 SparseCreate(sparse_block)
 
 # Retrieve water VMR
-retrievalAddAbsSpecies(
-    species = "H2O-PWR98",
-    unit = "vmr",
-    g1 = p_ret_grid,
-    g2 = lat_grid,
-    g3 = lon_grid   )
-
-VectorSetConstant(vars, nelem, 1e-10)
-DiagonalMatrix(sparse_block, vars)
-covmat_sxAddBlock(block = sparse_block)
+# retrievalAddAbsSpecies(
+#     species = "H2O-PWR98",
+#     unit = "vmr",
+#     g1 = p_ret_grid,
+#     g2 = lat_grid,
+#     g3 = lon_grid   )
+#
+# VectorSetConstant(vars, nelem, 1e-10)
+# DiagonalMatrix(sparse_block, vars)
+# covmat_sxAddBlock(block = sparse_block)
 
 # Retrieve temperature
-#retrievalAddTemperature (
-#    g1 = p_ret_grid,
-#    g2 = lat_grid,
-#    g3 = lon_grid,
-#    hse = "off"   )
-#
-#VectorSetConstant(vars, nelem, 1e-2)
-#DiagonalMatrix(sparse_block, vars)
-#covmat_sxAddBlock(block = sparse_block)
+retrievalAddTemperature (
+   g1 = p_ret_grid,
+   g2 = lat_grid,
+   g3 = lon_grid,
+   hse = "off"   )
+
+VectorSetConstant(vars, nelem, 0.1)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
 
 
 
@@ -182,7 +182,7 @@ WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
 
 
 # Disregarding simulated results, give y the Bosung observation values.
-# ReadXML(y, "BosungObservations.xml")
+#ReadXML(y, "BosungObservations.xml")
 
 
 
@@ -197,6 +197,8 @@ AgendaSet( inversion_iterate_agenda ){
   # To be safe, rerun checks dealing with the atmosphere
   atmfields_checkedCalc
   atmgeom_checkedCalc
+
+	Print(vmr_field)
 
   # Calculate yf and Jacobian matching x.
   yCalc( y=yf )
@@ -256,9 +258,6 @@ OEM(method="gn",
     max_iter=5,
     display_progress=1,
     lm_ga_settings=[10,2,2,100,1,99])
-
-
-
 Print( oem_errors, 0 )
 
 
@@ -282,9 +281,7 @@ retrievalErrorsExtract
 
 
 # Save the retrieval results in xml files.
-WriteXML( "ascii", x, "ClearSky_1D_OEM_Retrieval.xml" ) # Retrievals
-WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_Retrieval_p_grid.xml") # Retrieval grid
-
-
+WriteXML( "ascii", x, "ClearSky_1D_OEM_retrieval_results.xml" ) # Retrievals
+WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_retrieval_p_grid.xml") # Retrieval grid
 
 }
