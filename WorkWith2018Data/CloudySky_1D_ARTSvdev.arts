@@ -184,15 +184,15 @@ jacobianOff
 
 
 
-
-# Specification of cloud
-# -----------------------
-
 # Clearsky = No scattering
 #cloudboxOff
 # This line is moved down here because somehow it needs jacobian inputs.
 # Cloudy sky = scattering in the entire atmosphere
-# cloudboxSetFullAtm
+cloudboxSetFullAtm
+
+
+# Specification of cloud
+# -----------------------
 
 # Set the cloudbox limits (pressure units)
 # Alternative: cloudboxSetManuallyAltitude (specification in [km])
@@ -222,7 +222,6 @@ pnd_fieldCalcFrompnd_field_raw
 # rescaling back to pnd equivalent to only one scattering element. in a true
 # case, this is NOT needed!
 Tensor4Scale( out=pnd_field, in=pnd_field, value=0.5 )
-
 
 
 
