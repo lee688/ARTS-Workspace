@@ -40,15 +40,16 @@ IndexSet( stokes_dim, 1 )
 
 # Frequency and pressure grids
 #
-VectorCreate( p_ret_grid )
-IndexCreate( np )
-IndexSet( np, 25 )
-#
 ReadXML( f_grid, "ClearSky_1D_f_grid.xml" )
 ReadXML( p_grid, "ClearSky_1D_p_grid.xml" )
+IndexCreate( np )
+nelemGet( np, p_grid )
+
+# Retrieval pressure grid
+#
+VectorCreate( p_ret_grid )
 Copy( p_ret_grid, p_grid )
 #VectorNLogSpace( p_ret_grid, np, 1000e2, 50e2 )
-
 
 
 # Spectroscopy
@@ -62,8 +63,8 @@ abs_speciesSet( species=
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-ReadXML( abs_lines, "testdata_ozone_line.xml" )
-#ReadXML( abs_lines, "abs_lines.xml" )
+#ReadXML( abs_lines, "testdata_ozone_line.xml" )
+ReadXML( abs_lines, "abs_lines.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
@@ -131,16 +132,16 @@ nelemGet( nf, f_grid )
 SparseCreate(sparse_block)
 
 # Retrieve water VMR
-# retrievalAddAbsSpecies(
-#     species = "H2O-PWR98",
-#     unit = "vmr",
-#     g1 = p_ret_grid,
-#     g2 = lat_grid,
-#     g3 = lon_grid   )
-#
-# VectorSetConstant(vars, nelem, 1e-10)
-# DiagonalMatrix(sparse_block, vars)
-# covmat_sxAddBlock(block = sparse_block)
+retrievalAddAbsSpecies(
+   species = "H2O-PWR98",
+   unit = "vmr",
+   g1 = p_ret_grid,
+   g2 = lat_grid,
+   g3 = lon_grid   )
+
+VectorSetConstant(vars, nelem, 1e-10)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
 
 # Retrieve temperature
 retrievalAddTemperature (
@@ -152,8 +153,6 @@ retrievalAddTemperature (
 VectorSetConstant(vars, nelem, 0.1)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
-
-
 
 MatrixCreate(dense_block)
 
@@ -182,14 +181,14 @@ WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
 
 
 # Disregarding simulated results, give y the Bosung observation values.
-#ReadXML(y, "BosungObservations.xml")
+ReadXML(y, "BosungObservations.xml")
 
 
 
 # Iteration agenda
 #
 AgendaSet( inversion_iterate_agenda ){
-
+    
   Ignore(inversion_iteration_counter)
   # Map x to ARTS' variables
   x2artsStandard
@@ -197,9 +196,7 @@ AgendaSet( inversion_iterate_agenda ){
   # To be safe, rerun checks dealing with the atmosphere
   atmfields_checkedCalc
   atmgeom_checkedCalc
-
-	Print(vmr_field)
-
+  
   # Calculate yf and Jacobian matching x.
   yCalc( y=yf )
 
@@ -214,13 +211,10 @@ AgendaSet( inversion_iterate_agenda ){
 
 
 # Let a priori VMR be off with 1 ppm
-#
-Tensor4AddScalar( vmr_field, vmr_field, 1e-6 )
-
-
+#Tensor4AddScalar( vmr_field, vmr_field, 1e-6 )
 
 # Let a priori temperature be off by 1 K.
-Tensor3AddScalar( t_field, t_field, 1 )
+#Tensor3AddScalar( t_field, t_field, 1 )
 
 
 

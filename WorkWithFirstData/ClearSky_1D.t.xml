@@ -29,10 +29,10 @@
 5.0000000e+03
 </Vector>
 <Vector name="Latitude" nelem="1">
-3.4763892e+01
+0.0000000e+00
 </Vector>
 <Vector name="Longitude" nelem="1">
-1.2721243e+02
+0.0000000e+00
 </Vector>
 <Tensor3 ncols="1" nrows="1" npages="25">
 2.9196411e+02
