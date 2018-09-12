@@ -36,11 +36,14 @@ IndexCreate( np )
 #
 NumericSet( f_start, 110.436e9 )
 NumericSet( f_end, 111.236e9 )
-IndexSet( nf, 801 )
-IndexSet( np, 81 )
+#IndexSet( nf, 801 )
+#IndexSet( np, 81 )
+IndexSet( nf, 18 )
+IndexSet( np, 18 )
 #
 VectorNLinSpace( f_grid, nf, f_start, f_end )
-VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
+#VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
+VectorNLogSpace( p_grid,    18, 500e2, 0.1 )
 VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
 
 
@@ -113,13 +116,13 @@ nelemGet( nelem, p_ret_grid )
 
 
 
- retrievalAddAbsSpecies(
-     species = "O3",
-     unit = "vmr",
-     g1 = p_ret_grid,
-     g2 = lat_grid,
-     g3 = lon_grid
- )
+# retrievalAddAbsSpecies(
+#     species = "O3",
+#     unit = "vmr",
+#     g1 = p_ret_grid,
+#     g2 = lat_grid,
+#     g3 = lon_grid
+# )
 
 retrievalAddTemperature (
    g1 = p_ret_grid,
@@ -129,9 +132,9 @@ retrievalAddTemperature (
 
 SparseCreate(sparse_block)
 
- VectorSetConstant(vars, nelem, 1e-12)
- DiagonalMatrix(sparse_block, vars)
- covmat_sxAddBlock(block = sparse_block)
+# VectorSetConstant(vars, nelem, 1e-12)
+# DiagonalMatrix(sparse_block, vars)
+# covmat_sxAddBlock(block = sparse_block)
 
 VectorSetConstant(vars, nelem, 0.1)
 DiagonalMatrix(sparse_block, vars)
