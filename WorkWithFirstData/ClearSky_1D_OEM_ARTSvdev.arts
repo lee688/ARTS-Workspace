@@ -247,12 +247,16 @@ covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
 
 
 # Run OEM
-OEM(method="gn",
-    x_norm=covmat_sx_SqrtDiag,
-    max_iter=5,
-    display_progress=1,
-    lm_ga_settings=[10,2,2,100,1,99])
-Print( oem_errors, 0 )
+#OEM(method="gn",
+#    x_norm=covmat_sx_SqrtDiag,
+#    max_iter=5,
+#    display_progress=1,
+#    lm_ga_settings=[10,2,2,100,1,99])
+#Print( oem_errors, 0 )
+OEM(method="lm",
+max_iter=20,
+display_progress=1,
+lm_ga_settings=[100,5,2,1000,1,99])
 
 
 

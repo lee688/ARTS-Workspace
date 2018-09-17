@@ -163,6 +163,8 @@ yCalc
 # Iteration agenda
 #
 AgendaSet( inversion_iterate_agenda ){
+  
+  xClip(ijq = 0, limit_low = 150.0, limit_high = 350)
 
   Ignore(inversion_iteration_counter)
   # Map x to ARTS' variables
@@ -207,10 +209,14 @@ MatrixSet( jacobian, [] )
 #AgendaExecute( inversion_iterate_agenda )
 
 # Run OEM
-OEM(method="gn",
-    max_iter=5,
+#OEM(method="gn",
+#    max_iter=5,
+#    display_progress=1,
+#    lm_ga_settings=[10,2,2,100,1,99])
+OEM(method="lm",
+    max_iter=15,
     display_progress=1,
-    lm_ga_settings=[10,2,2,100,1,99])
+    lm_ga_settings=[100,5,2,1000,1,99])
 #
 Print( oem_errors, 0 )
 
