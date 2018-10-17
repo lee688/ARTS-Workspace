@@ -39,11 +39,11 @@ NumericSet( f_end, 111.236e9 )
 #IndexSet( nf, 801 )
 #IndexSet( np, 81 )
 IndexSet( nf, 18 )
-IndexSet( np, 18 )
+IndexSet( np, 36 )
 #
 VectorNLinSpace( f_grid, nf, f_start, f_end )
 #VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
-VectorNLogSpace( p_grid,    18, 500e2, 0.1 )
+VectorNLogSpace( p_grid,    36, 500e2, 0.1 )
 VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
 
 
