@@ -63,8 +63,8 @@ abs_speciesSet( species=
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-#ReadXML( abs_lines, "testdata_ozone_line.xml" )
-ReadXML( abs_lines, "abs_lines.xml" )
+ReadXML( abs_lines, "testdata_ozone_line.xml" )
+# ReadXML( abs_lines, "abs_lines.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
@@ -188,7 +188,7 @@ ReadXML(y, "BosungObservations.xml")
 # Iteration agenda
 #
 AgendaSet( inversion_iterate_agenda ){
-    
+
   Ignore(inversion_iteration_counter)
   # Map x to ARTS' variables
   x2artsStandard
@@ -196,7 +196,7 @@ AgendaSet( inversion_iterate_agenda ){
   # To be safe, rerun checks dealing with the atmosphere
   atmfields_checkedCalc
   atmgeom_checkedCalc
-  
+
   # Calculate yf and Jacobian matching x.
   yCalc( y=yf )
 
@@ -247,16 +247,16 @@ covmat_sxExtractSqrtDiagonal(covmat_sx_SqrtDiag, covmat_sx)
 
 
 # Run OEM
-#OEM(method="gn",
-#    x_norm=covmat_sx_SqrtDiag,
-#    max_iter=5,
-#    display_progress=1,
-#    lm_ga_settings=[10,2,2,100,1,99])
+OEM(method="gn",
+   x_norm=covmat_sx_SqrtDiag,
+   max_iter=5,
+   display_progress=1,
+   lm_ga_settings=[10,2,2,100,1,99])
 #Print( oem_errors, 0 )
-OEM(method="lm",
-max_iter=20,
-display_progress=1,
-lm_ga_settings=[100,5,2,1000,1,99])
+# OEM(method="lm",
+# max_iter=20,
+# display_progress=1,
+# lm_ga_settings=[100,5,2,1000,1,99])
 
 
 

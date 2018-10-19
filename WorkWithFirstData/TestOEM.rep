@@ -1,12 +1,1 @@
-  Run-time error in oem computation: Forward Model Evaluation Error
-  Run-time error in agenda: inversion_iterate_agenda
-  Run-time error in method: atmfields_checkedCalc
-  There are bad partition functions in your setup.
-  Minimum temperature for defined partition functions is: 150 K.
-  Maximum temperature for defined partition functions is: 300 K
-  There is a t_field entry of 350 K.
-Run-time error in controlfile: TestOEM.arts
-Run-time error in method: avkCalc
-The gain matrix has invalid dimensions.
-Stopping ARTS execution.
-Goodbye.
+
