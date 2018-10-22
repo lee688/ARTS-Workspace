@@ -1,6 +1,6 @@
 # Raw trial by B Lee (ARA Consulting and Techonology)
 # This is for ARTS development version.
-# Original code from "arts-dev/controlfiles/artscomponents/oem/".
+# Original code from "ARTS/controlfiles/artscomponents/oem/".
 
 
 
@@ -63,8 +63,8 @@ abs_speciesSet( species=
 ArrayOfLineshapeSpecCreate( abs_lineshapeDefine )
 abs_lineshapeDefine( abs_lineshapeDefine, "Voigt_Kuntz6", "VVH", 750e9 )
 #
-ReadXML( abs_lines, "testdata_ozone_line.xml" )
-# ReadXML( abs_lines, "abs_lines.xml" )
+# ReadXML( abs_lines, "testdata/ozone_line.xml" )
+ReadXML( abs_lines, "artscomponents/clearsky/abs_lines.xml" )
 abs_lines_per_speciesCreateFromLines
 
 
@@ -130,6 +130,7 @@ IndexCreate( nf )
 nelemGet( nf, f_grid )
 
 SparseCreate(sparse_block)
+MatrixCreate(dense_block)
 
 # Retrieve water VMR
 retrievalAddAbsSpecies(
@@ -139,6 +140,7 @@ retrievalAddAbsSpecies(
    g2 = lat_grid,
    g3 = lon_grid   )
 
+# Covariance matrix Sx for water VMR
 VectorSetConstant(vars, nelem, 1e-10)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
@@ -150,16 +152,16 @@ retrievalAddTemperature (
    g3 = lon_grid,
    hse = "off"   )
 
+# Covariance matrix Sx for T
 VectorSetConstant(vars, nelem, 0.1)
 DiagonalMatrix(sparse_block, vars)
 covmat_sxAddBlock(block = sparse_block)
 
-MatrixCreate(dense_block)
-
+# Covariance matrix Se for measurement error. 
 VectorSetConstant(vars, nf, 1e-2)
 DiagonalMatrix(sparse_block, vars)
 covmat_seAddBlock(block = sparse_block)
-
+#
 VectorSetConstant(vars, nf, 1e+2)
 DiagonalMatrix(dense_block, vars)
 covmat_seAddInverseBlock(block = dense_block)
@@ -191,8 +193,9 @@ AgendaSet( inversion_iterate_agenda ){
 
   Ignore(inversion_iteration_counter)
   # Map x to ARTS' variables
-  x2artsStandard
-
+  # x2artsStandard
+  x2artsAtmAndSurf
+  
   # To be safe, rerun checks dealing with the atmosphere
   atmfields_checkedCalc
   atmgeom_checkedCalc
@@ -201,7 +204,7 @@ AgendaSet( inversion_iterate_agenda ){
   yCalc( y=yf )
 
   # Add baseline term
-  VectorAddVector( yf, yf, y_baseline )
+  # VectorAddVector( yf, yf, y_baseline )
 
   # This method takes cares of some "fixes" that are needed to get the Jacobian
   # right for iterative solutions. No need to call this WSM for linear inversions.

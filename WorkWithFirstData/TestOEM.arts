@@ -168,7 +168,8 @@ AgendaSet( inversion_iterate_agenda ){
 
   Ignore(inversion_iteration_counter)
   # Map x to ARTS' variables
-  x2artsStandard
+  # x2artsStandard
+  x2artsAtmAndSurf
 
   # To be safe, rerun checks dealing with the atmosphere
   atmfields_checkedCalc
@@ -178,7 +179,7 @@ AgendaSet( inversion_iterate_agenda ){
   yCalc( y=yf )
 
   # Add baseline term
-  VectorAddVector( yf, yf, y_baseline )
+  # VectorAddVector( yf, yf, y_baseline )
 
   # This method takes cares of some "fixes" that are needed to get the Jacobian
   # right for iterative solutions. No need to call this WSM for linear inversions.
