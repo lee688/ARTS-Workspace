@@ -26,40 +26,42 @@ Copy( ppath_agenda,               ppath_agenda__FollowSensorLosPath   )
 Copy( ppath_step_agenda,          ppath_step_agenda__GeometricPath    )
 
 
+
 # Basic settings
 #
 AtmosphereSet1D
 IndexSet( stokes_dim, 1 )
 
 
-# Variables to define frequency grid and 
-#
-NumericCreate( f0 )
-NumericCreate( df_start )
-NumericCreate( df_end )
-VectorCreate( fgrid1 )
-VectorCreate( fgrid2 )
-IndexCreate( nf )
-#
-NumericSet( f0, 110.836e9 )
-#
-# Create broad, coarse frequency grid
-NumericSet( df_start, -0.3e9 )
-NumericSet( df_end, 0.3e9 )
-IndexSet( nf, 601 )
-VectorNLinSpace( fgrid1, nf, df_start, df_end )
-#
-# Create a narrow, fine frequency grid
-NumericSet( df_start, -10e6 )
-NumericSet( df_end, 10e6 )
-IndexSet( nf, 401 )
-VectorNLinSpace( fgrid2, nf, df_start, df_end )
-#
-# Create final f_grid
-VectorInsertGridPoints( f_grid, fgrid1, fgrid2 )
-VectorAddScalar( f_grid, f_grid, f0 )
 
-
+## Variables to define frequency grid and 
+##
+#NumericCreate( f0 )
+#NumericCreate( df_start )
+#NumericCreate( df_end )
+#VectorCreate( fgrid1 )
+#VectorCreate( fgrid2 )
+#IndexCreate( nf )
+##
+#NumericSet( f0, 110.836e9 )
+##
+## Create broad, coarse frequency grid
+#NumericSet( df_start, -0.3e9 )
+#NumericSet( df_end, 0.3e9 )
+#IndexSet( nf, 601 )
+#VectorNLinSpace( fgrid1, nf, df_start, df_end )
+##
+## Create a narrow, fine frequency grid
+#NumericSet( df_start, -10e6 )
+#NumericSet( df_end, 10e6 )
+#IndexSet( nf, 401 )
+#VectorNLinSpace( fgrid2, nf, df_start, df_end )
+##
+## Create final f_grid
+#VectorInsertGridPoints( f_grid, fgrid1, fgrid2 )
+#VectorAddScalar( f_grid, f_grid, f0 )
+#
+#
 ## Define spectrometer
 ##
 #NumericCreate( f_resolution )
@@ -72,17 +74,30 @@ VectorAddScalar( f_grid, f_grid, f0 )
 ##
 #NumericAdd( f_start, f_start, f0 )
 #NumericAdd( f_end, f_end, f0 )
-
-
-# Pressure grid
 #
-IndexCreate( np )
+#
+## Pressure grid
+##
+#IndexCreate( np )
+#VectorCreate( p_ret_grid )
+##
+#IndexSet( np, 81 )
+##
+#VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
+#VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
+
+
+
+# Frequency and pressure grids
+#
+ReadXML( f_grid, "f_grid.xml" )
+ReadXML( p_grid, "1D_p_grid.xml" )
+#
+# Retrieval pressure grid
+#
 VectorCreate( p_ret_grid )
-#
-IndexSet( np, 81 )
-#
-VectorNLogSpace( p_grid,    361, 500e2, 0.1 )
-VectorNLogSpace( p_ret_grid, np, 500e2, 0.1 )
+Copy( p_ret_grid, p_grid )
+
 
 
 # Spectroscopy
@@ -104,15 +119,16 @@ abs_lines_per_speciesCreateFromLines
 # Atmosphere (a priori)
 #
 #AtmRawRead( basename = "testdata/tropical" )
-AtmRawRead( basename = "ClearSky_1D" )
+AtmRawRead( basename = "1D" )
 AtmFieldsCalc
 #
-MatrixSetConstant( z_surface, 1, 1, 10e3 )
+MatrixSetConstant( z_surface, 1, 1, 0 )
 #
 #VectorSet( lat_true, [10] )
 #VectorSet( lon_true, [123] )
 VectorSet( lat_true, [34.763892] )
 VectorSet( lon_true, [127.212426] )
+
 
 
 ## Apply HSE
@@ -125,38 +141,42 @@ VectorSet( lon_true, [127.212426] )
 #z_fieldFromHSE
 
 
+
 # Sensor pos/los/time
 #
-MatrixSetConstant( sensor_pos, 1, 1, 15e3 )
-MatrixSetConstant( sensor_los, 1, 1, 60 )
+#MatrixSetConstant( sensor_pos, 1, 1, 0 )
+#MatrixSetConstant( sensor_los, 1, 1, 0 )
+ReadXML(sensor_pos, "1D_sensor_pos.xml")
+ReadXML(sensor_los, "1D_sensor_los.xml")
 #
 VectorSetConstant( sensor_time, 1, 0 )
 
 
-# True f_backend
+## True f_backend
+##
+#VectorLinSpace( f_backend, f_start, f_end, f_resolution )
 #
-VectorLinSpace( f_backend, f_start, f_end, f_resolution )
+#
+## Assume a Gaussian channel response
+##
+#VectorCreate( fwhm )
+#VectorSetConstant( fwhm, 1, f_resolution )
+#backend_channel_responseGaussian( fwhm = fwhm )
+#
+#
+## With a frequency shift retrieval, we must use sensor_response_agenda
+##
+#FlagOn( sensor_norm )
+##
+#AgendaSet( sensor_response_agenda ){
+#  AntennaOff 
+#  sensor_responseInit
+#  # Among responses we only include a backend
+#  sensor_responseBackend
+#}
+##
+#AgendaExecute( sensor_response_agenda )
 
-
-# Assume a Gaussian channel response
-#
-VectorCreate( fwhm )
-VectorSetConstant( fwhm, 1, f_resolution )
-backend_channel_responseGaussian( fwhm = fwhm )
-
-
-# With a frequency shift retrieval, we must use sensor_response_agenda
-#
-FlagOn( sensor_norm )
-#
-AgendaSet( sensor_response_agenda ){
-  AntennaOff 
-  sensor_responseInit
-  # Among responses we only include a backend
-  sensor_responseBackend
-}
-#
-AgendaExecute( sensor_response_agenda )
 
 
 # RT
@@ -165,31 +185,43 @@ NumericSet( ppath_lmax, -1 )
 StringSet( iy_unit, "RJBT" )
 
 
+
 # Deactive parts not used (jacobian activated later)
 #
 jacobianOff
 cloudboxOff
+sensorOff
+
 
 
 # Perform tests
 #
 abs_xsec_agenda_checkedCalc
 propmat_clearsky_agenda_checkedCalc
-atmfields_checkedCalc
+atmfields_checkedCalc(bad_partition_functions_ok=1)
 atmgeom_checkedCalc
 cloudbox_checkedCalc
 sensor_checkedCalc
 
 
+
 # Simulate "measurement vector"
 #
 yCalc
-
-
-
 #
-# Start on retrieval specific part
-#
+# Save the simulated results in an xml file.
+WriteXML( "ascii", y, "ClearSky_1D_OEM_Tb.xml" ) # Brightness temperature
+
+
+
+# Disregarding simulated results, give y the Bosung observation values.
+ReadXML(y, "Tb_radmtrL1.xml")
+
+
+
+##
+## Start on retrieval specific part
+##
 
 # Some vaiables
 #
@@ -198,50 +230,61 @@ SparseCreate(sparse_block)
 MatrixCreate(dense_block)
 
 
+
 # Start definition of retrieval quantities
 #
 retrievalDefInit
 #
 nelemGet( nelem, p_ret_grid )
-nelemGet( nf, sensor_response_f )
+#nelemGet( nf, sensor_response_f )
+IndexCreate( nf )
+nelemGet( nf, f_grid )
 
+# Retrieve temperature
+retrievalAddTemperature (
+   g1 = p_ret_grid,
+   g2 = lat_grid,
+   g3 = lon_grid,
+   hse = "off"   )
 
-# Add ozone as retrieval quantity
-#
+# Covariance matrix Sx for T
+VectorSetConstant(vars, nelem, 0.1)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
+
+# Retrieve water VMR
 retrievalAddAbsSpecies(
-    species = "O3",
-    unit = "vmr",
-    g1 = p_ret_grid,
-    g2 = lat_grid,
-    g3 = lon_grid
-)
-#
-VectorSetConstant( vars, nelem, 1e-12 )
-DiagonalMatrix( sparse_block, vars )
-covmat_sxAddBlock( block = sparse_block )
+   species = "H2O-PWR98",
+   unit = "vmr",
+   g1 = p_ret_grid,
+   g2 = lat_grid,
+   g3 = lon_grid   )
 
+# Covariance matrix Sx for water VMR
+VectorSetConstant(vars, nelem, 1e-8)
+DiagonalMatrix(sparse_block, vars)
+covmat_sxAddBlock(block = sparse_block)
 
-# Add a frquency shift retrieval
+## Add a frquency shift retrieval
+##
+#retrievalAddFreqShift(
+#  df = 50e3
+#)
+##
+#VectorSetConstant( vars, 1, 1e10 )
+#DiagonalMatrix( sparse_block, vars )
+#covmat_sxAddBlock( block = sparse_block )
 #
-retrievalAddFreqShift(
-  df = 50e3
-)
 #
-VectorSetConstant( vars, 1, 1e10 )
-DiagonalMatrix( sparse_block, vars )
-covmat_sxAddBlock( block = sparse_block )
-
-
-# Add a baseline fit
-#
-retrievalAddPolyfit(
-  poly_order = 0
-)
-#
-VectorSetConstant( vars, 1, 0.5 )
-DiagonalMatrix( sparse_block, vars )
-covmat_sxAddBlock( block = sparse_block )
-
+## Add a baseline fit
+##
+#retrievalAddPolyfit(
+#  poly_order = 0
+#)
+##
+#VectorSetConstant( vars, 1, 0.5 )
+#DiagonalMatrix( sparse_block, vars )
+#covmat_sxAddBlock( block = sparse_block )
 
 # Define Se and its invers
 #
@@ -253,10 +296,10 @@ VectorSetConstant( vars, nf, 1e+2 )
 DiagonalMatrix( dense_block, vars )
 covmat_seAddInverseBlock( block = dense_block )
 
-
 # End definition of retrieval quantities
 #
 retrievalDefClose
+
 
 
 # x, jacobian and yf must be initialised (or pre-calculated as shown below)
@@ -276,22 +319,25 @@ MatrixSet( jacobian, [] )
 # Iteration agenda
 #
 AgendaSet( inversion_iterate_agenda ){
-
+  
+  xClip(ijq = 0, limit_low = 150.0, limit_high = 350.0)
+  xClip(ijq = 1, limit_low = 1e-12, limit_high = 2)
+  
   Ignore(inversion_iteration_counter)
     
   # Map x to ARTS' variables
   x2artsAtmAndSurf
-  x2artsSensor   # No need to call this WSM if no sensor variables retrieved
+  #x2artsSensor   # No need to call this WSM if no sensor variables retrieved
 
   # To be safe, rerun some checks 
-  atmfields_checkedCalc
+  atmfields_checkedCalc(bad_partition_functions_ok=1)
   atmgeom_checkedCalc
 
   # Calculate yf and Jacobian matching x.
   yCalc( y=yf )
 
   # Add baseline term (no need to call this WSM if no sensor variables retrieved)
-  VectorAddVector( yf, yf, y_baseline )
+  #VectorAddVector( yf, yf, y_baseline )
 
   # This method takes cares of some "fixes" that are needed to get the Jacobian
   # right for iterative solutions. No need to call this WSM for linear inversions.
@@ -299,24 +345,24 @@ AgendaSet( inversion_iterate_agenda ){
 }
 
 
-# Let a priori be off with 0.5 ppm
+## Let a priori be off with 0.5 ppm
+##
+#Tensor4AddScalar( vmr_field, vmr_field, 0.5e-6 )
 #
-Tensor4AddScalar( vmr_field, vmr_field, 0.5e-6 )
-
-
-# Add a baseline
 #
-VectorAddScalar( y, y, 1 )
-
-
-# Introduce a frequency error
+## Add a baseline
+##
+#VectorAddScalar( y, y, 1 )
 #
-VectorAddScalar( f_backend, f_backend, -150e3 )
-
-
-# Calculate sensor_reponse (this time with assumed f_backend)
 #
-AgendaExecute( sensor_response_agenda )
+## Introduce a frequency error
+##
+#VectorAddScalar( f_backend, f_backend, -150e3 )
+#
+#
+## Calculate sensor_reponse (this time with assumed f_backend)
+##
+#AgendaExecute( sensor_response_agenda )
 
 
 # Create xa
@@ -328,11 +374,11 @@ xaStandard
 OEM(          method = "gn",
             max_iter = 5,
     display_progress = 1,
-             stop_dx = 0.1,
+             stop_dx = 0.01,
       lm_ga_settings = [10,2,2,100,1,99])
 #
 Print( oem_errors, 0 )
-Print( x, 0 )
+#Print( x, 0 )
 
 # Compute averaging kernel matrix
 #
@@ -353,4 +399,9 @@ retrievalErrorsExtract
 
 #WriteXML( "ascii", f_backend, "f.xml" )
 #WriteXML( "ascii", y, "y.xml" )
+
+# Save the retrieval results in xml files.
+WriteXML( "ascii", x, "ClearSky_1D_OEM_retrieval_results.xml" ) # Retrievals
+WriteXML( "ascii", p_ret_grid, "ClearSky_1D_OEM_retrieval_p_grid.xml") # Retrieval grid
+
 }
