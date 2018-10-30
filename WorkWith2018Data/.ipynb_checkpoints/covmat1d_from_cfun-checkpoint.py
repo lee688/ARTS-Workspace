@@ -48,7 +48,7 @@ import numpy.matlib as npm
 import scipy.interpolate as spi
 import copy 
 
-def covmat1d_from_cfun(xp1,Std1,cfun1,Cl1=None,cco1=0,mapfun1=None):
+def covmat1d_from_cfun(xp1,Std1,cfun1,Cl1=None,cco1=0,mapfun1=None):        
     
     xp = copy.deepcopy(xp1)
     Std = copy.deepcopy(Std1)
@@ -112,7 +112,7 @@ def covmat1d_from_cfun(xp1,Std1,cfun1,Cl1=None,cco1=0,mapfun1=None):
         L = Cl;
     else:
         f = spi.interp1d(Cl[:,0], Cl[:,1])
-        si = f(handle_expand(handle_expand(Cl[:,0],xp)));
+        cl = f(handle_expand(handle_expand(Cl[:,0],xp)));
         [X1,X2] = npm.meshgrid( cl, cl );
         L       = ( X1 + X2 ) / 2;
     
@@ -122,7 +122,7 @@ def covmat1d_from_cfun(xp1,Std1,cfun1,Cl1=None,cco1=0,mapfun1=None):
         S = 1 - (1-np.exp(-1)) * ( D/L );
         # Negativa values removed by cco
     elif cfun.lower() == 'exp':
-        S = np.exp(D/L)
+        S = np.exp(-D/L)
     elif cfun.lower() == 'gau':
         S = np.exp( -(D/L)**2 );
     else:
