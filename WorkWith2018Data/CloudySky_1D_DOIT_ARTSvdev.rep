@@ -1,9 +1,0 @@
-Run-time error in controlfile: CloudySky_1D_DOIT_ARTSvdev.arts
-Run-time error in method: sensor_responseAntenna
-The frequency grid of *antenna_response is too narrow. It must
-cover all considered frequencies (*f_grid*), if the length
-is > 1. The grid needs to be expanded with 1.717e+11 Hz in
-the upper end.
-
-Stopping ARTS execution.
-Goodbye.

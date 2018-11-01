@@ -1,5 +1,19 @@
-# example: limb case using an optimized polar angle grid.
+#DEFINITIONS:  -*-sh-*-
+#
+# filename: TestDOIT.arts
+#
+# Demonstration of a DOIT scattering calculation
+#
+# Author: Claudia Emde
+# 
+
 Arts2 {
+
+IndexSet( stokes_dim, 4 )
+
+
+
+
 
 INCLUDE "general/general.arts"
 INCLUDE "general/continua.arts"
@@ -29,15 +43,15 @@ Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
 jacobianOff
 
 
-
-# Frequency grid
+# Frequency grid 
 # --------------
 # Note: The frequencies must be contained in the gas absorption lookup table.
 VectorSet( f_grid, [229.5e9,230.5e9] )
+ReadXML(f_grid, "f_grid.xml")
 
 # Number of Stokes components to be computed
 #-------------------------------------------
-IndexSet( stokes_dim, 1 )
+#IndexSet( stokes_dim, 4 )
 
 # Radiance output units
 #----------------------
@@ -51,23 +65,20 @@ StringSet( iy_unit, "RJBT" )
 AtmosphereSet1D
 
 # Pressure grid
-ReadXML( p_grid, "./1D_p_grid.xml" )
+ReadXML( p_grid, "1D_p_grid.xml" )
 
 # Definition of species
 abs_speciesSet( species=[ "H2O-PWR98",
                           "O2-PWR93",
-                          "O3",
+                          "O3", 
                           "N2-SelfContStandardType" ] )
 
 # Atmospheric profiles
-AtmRawRead( basename="./1D" )
+AtmRawRead( basename="1D" )
 AtmFieldsCalc
-Extract( z_surface, z_field, 0 )
-Extract( t_surface, t_field, 0 )
 
 
-
-# Gas absorption from lookup table
+# Gas absorption from lookup table 
 # ---------------------------------
 
 # in case an abs_lookup table need to be calculated, uncomment the block below
@@ -79,70 +90,60 @@ Extract( t_surface, t_field, 0 )
 #abs_lookupCalc
 #WriteXML( output_file_format="binary", in=abs_lookup, filename="my_gas_abs_lookup.xml" )
 
-#ReadXML( abs_lookup, "testdata/testdoit_gas_abs_lookup.xml" )
-#abs_lookupAdapt
+ReadXML( abs_lookup, "testdata/testdoit_gas_abs_lookup.xml" )
+abs_lookupAdapt
 
 # absorption from LUT
-# Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
-
-# Gas absorption on the fly
-# ---------------------------------
-Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
-ReadXML( abs_lines, "./abs_lines.xml" )
-abs_lines_per_speciesCreateFromLines
-
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
 
 
 # Definition of Earth surface
 # ----------------------------
-# MatrixSetConstant( z_surface, 1, 1, 500 )
+#MatrixSetConstant( z_surface, 1, 1, 500 )
+Extract( z_surface, z_field, 0 )
 
 # Emission and reflection properties:
 # - specular reflecting water surface at ambient atmospheric temperature
 # - water reflective indices from Liebe model
 # - surface skin temperature interpolated from atmospheric t_field
 #
-# VectorCreate( n_t_grid )
-# AgendaSet( surface_rtprop_agenda ){
-#   specular_losCalc
-#   InterpAtmFieldToPosition(
-#     out   = surface_skin_t,
-#     field = t_field )
-#   VectorSetConstant( n_t_grid, 1, surface_skin_t )
-#   complex_refr_indexWaterLiebe93(
-#     complex_refr_index = surface_complex_refr_index,
-#     data_f_grid             = f_grid,
-#     data_T_grid             = n_t_grid )
-#   surfaceFlatRefractiveIndex
-# }
-
-# Weakly reflecting surface
-# ---
-VectorSetConstant( surface_scalar_reflectivity, 1, 0.05 )
-Copy( surface_rtprop_agenda,
-      surface_rtprop_agenda__Specular_NoPol_ReflFix_SurfTFromt_surface )
-
+VectorCreate( n_t_grid )
+AgendaSet( surface_rtprop_agenda ){
+  specular_losCalc
+  InterpAtmFieldToPosition( 
+    out   = surface_skin_t, 
+    field = t_field )
+  VectorSetConstant( n_t_grid, 1, surface_skin_t )
+  complex_refr_indexWaterLiebe93( 
+    complex_refr_index = surface_complex_refr_index,
+    data_f_grid             = f_grid,
+    data_T_grid             = n_t_grid )
+  surfaceFlatRefractiveIndex
+}
 
 
 # Definition of sensor position and LOS
 #--------------------------------------
+#VectorCreate( vector_1 )
+#VectorCreate( vector_2 )
+#
+## Sensor viewing angles
+#VectorSet( vector_1, [99.7841941981] )
+##VectorNLinSpace( vector_2, 4, 120, 180 ) #extend with a couple of downviewing los
+##Append( vector_1, vector_2 )
+#nelemGet( nelem, vector_1 )
+#
+## Sensor altitude from earth surface
+#VectorSetConstant( vector_2, nelem, 95000.1 )
+#
+#Matrix1ColFromVector( sensor_pos, vector_2 )
+#Matrix1ColFromVector( sensor_los, vector_1 )
 ReadXML( sensor_los, "./1D_sensor_los.xml" )
 ReadXML( sensor_pos, "./1D_sensor_pos.xml" )
 
 # SensorOff means that the result of the calculation are the radiances,
 # which are not modified by sensor properties
 sensorOff
-
-# Bosung radiometer's antenna characteristics.
-# ---
-# ReadXML(antenna_response, "./antenna_response.xml")
-# ReadXML(mblock_dlos_grid, "./mblock_dlos_grid.xml")
-# IndexSet(sensor_norm, 1)
-# IndexSet(antenna_dim, 1)
-# MatrixSet(antenna_dlos, [0])
-# sensor_responseInit
-# sensor_responseAntenna
-
 
 
 # Specification of cloud
@@ -186,20 +187,20 @@ Tensor4Scale( out=pnd_field, in=pnd_field, value=0.5 )
 # Select interpolation method ('linear' or 'polynomial'):
 # ----------------------------------------------------
 
-# For limb calculations is is very important to have a fine resolution
+# For limb calculations is is very important to have a fine resolution     
 # about 90°.
-# If "polynomial" is selected one has to use an optimized grid. Please
+# If "polynomial" is selected one has to use an optimized grid. Please     
 # use *doit_za_grid_optCalc* to optimize the grid.
 doit_za_interpSet( interp_method="linear" )
 
 # As one needs for the RT calculations in limb direction a much finer
-# zenith angle grid resolution as for the computation of the scattering
-# integral, it is necessary to define two zenith angle grids. For the scattering
-# integral equidistant grids are created from N_za_grid, N_aa_grid, which give
-# the number of grid points. An optimized grid for the RT calculation needs to
-# be given by a file. If no filename is specified (za_grid_opt_file = ""), the
-# equidistant grids are used for both, scattering integral and RT calculation.
-# This option can only be used for down-looking geometries.
+# zenith angle grid resolution as for the computation of the scattering 
+# integral, it is necessary to define two zenith angle grids. For the scattering 
+# integral equidistant grids are created from N_za_grid, N_aa_grid, which give 
+# the number of grid points. An optimized grid for the RT calculation needs to 
+# be given by a file. If no filename is specified (za_grid_opt_file = ""), the 
+# equidistant grids are used for both, scattering integral and RT calculation. 
+# This option can only be used for down-looking geometries. 
 DOAngularGridsSet( N_za_grid=19, N_aa_grid=37,
                      za_grid_opt_file="testdata/testdoit_za_grid_opt.xml" )
 
@@ -214,8 +215,8 @@ AgendaSet( doit_mono_agenda ){
   Ignore( f_grid )
   # Alternative method (needs less memory):
   #scat_data_monoCalc
-  # Perform iterations: 1. scattering integral. 2. RT calculations with
-  # fixed scattering integral field, 3. convergence test
+  # Perform iterations: 1. scattering integral. 2. RT calculations with 
+  # fixed scattering integral field, 3. convergence test 
   doit_i_field_monoIterate
   # Write the radiation field inside the cloudbox:
   #WriteXMLIndexed( in=doit_i_field_mono, file_index=f_index )
@@ -270,15 +271,14 @@ AgendaSet( spt_calc_agenda ){
 # ----------------------
 AgendaSet( doit_conv_test_agenda ){
   # Give limits for all Stokes components in Rayleigh Jeans BT:
-  # doit_conv_flagAbsBT( epsilon=[0.1, 0.01, 0.01, 0.01] )
-  doit_conv_flagAbsBT( epsilon=[0.1] )
+  doit_conv_flagAbsBT( epsilon=[0.1, 0.01, 0.01, 0.01] )
 
   # Alternative: Give limits in radiances
   #doit_conv_flagAbs( doit_conv_flag, doit_iteration_counter, doit_i_field,
   #                   doit_i_field_old ){
   #  epsilon = [0.1e-15, 0.1e-18, 0.1e-18, 0.1e-18]
   #}
-  # If you want to investigat several iteration fields, for example
+  # If you want to investigat several iteration fields, for example 
   # to investigate the convergence behavior, you can use
   # the following method:
   #DoitWriteIterationFields
@@ -290,7 +290,11 @@ AgendaSet( iy_cloudbox_agenda ){
 }
 
 
-abs_xsec_agenda_checkedCalc
+
+
+
+
+
 propmat_clearsky_agenda_checkedCalc
 atmfields_checkedCalc
 atmgeom_checkedCalc
@@ -301,7 +305,7 @@ sensor_checkedCalc
 # Initialize Doit variables
 DoitInit
 
-# Calculate incoming radiation field at cloudbox boundary
+# Calculate incoming radiation field at cloudbox boundary 
 DoitGetIncoming
 
 # Set first guess field
@@ -318,8 +322,19 @@ DoitCalc
 # Calculate RT from cloudbox boundary to the sensor
 yCalc
 
-Print(f_grid)
-Print(y)
 
+
+
+
+
+
+WriteXML( in=y )
+
+#==================check==========================
+
+VectorCreate(yREFERENCE)
+ReadXML( yREFERENCE, "artscomponents/doit/yREFERENCE_DOIT.xml" )
+Compare( y, yREFERENCE, 1e-6 )
 
 } # End of Main
+ 
