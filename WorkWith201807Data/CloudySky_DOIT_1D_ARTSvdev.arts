@@ -9,7 +9,7 @@
 
 Arts2 {
 
-IndexSet( stokes_dim, 4 )
+IndexSet( stokes_dim, 1 )
 
 
 
@@ -46,7 +46,7 @@ jacobianOff
 # Frequency grid 
 # --------------
 # Note: The frequencies must be contained in the gas absorption lookup table.
-VectorSet( f_grid, [229.5e9,230.5e9] )
+#VectorSet( f_grid, [229.5e9,230.5e9] )
 ReadXML(f_grid, "f_grid.xml")
 
 # Number of Stokes components to be computed
@@ -89,12 +89,16 @@ AtmFieldsCalc
 #abs_lookupSetup
 #abs_lookupCalc
 #WriteXML( output_file_format="binary", in=abs_lookup, filename="my_gas_abs_lookup.xml" )
-
-ReadXML( abs_lookup, "testdata/testdoit_gas_abs_lookup.xml" )
-abs_lookupAdapt
-
-# absorption from LUT
-Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
+#
+#ReadXML( abs_lookup, "testdata/testdoit_gas_abs_lookup.xml" )
+#abs_lookupAdapt
+#
+## absorption from LUT
+#Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__LookUpTable )
+ReadXML( abs_lines, "./abs_lines.xml" )
+# on-the-fly absorption
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
+abs_lines_per_speciesCreateFromLines
 
 
 # Definition of Earth surface
@@ -164,10 +168,12 @@ ScatSpeciesInit
 # Here actually both added elements are indentical. however, for testing and for
 # demonstration purposed, having 2 elements is better.
 ScatElementsPndAndScatAdd(
-  scat_data_files=["testdata/scatData/azi-random_f229-231T214-225r100NP-1ar1_5ice.xml",
-                   "testdata/scatData/azi-random_f229-231T214-225r100NP-1ar1_5ice.xml"],
-  pnd_field_files=["testdata/testdoit_pnd_field_1D.xml",
-                   "testdata/testdoit_pnd_field_1D.xml"] )
+#  scat_data_files=["testdata/scatData/azi-random_f229-231T214-225r100NP-1ar1_5ice.xml",
+#                   "testdata/scatData/azi-random_f229-231T214-225r100NP-1ar1_5ice.xml"],
+  scat_data_files=["IconCloudIce_dmax0191um.xml",
+                   "IconCloudIce_dmax0191um.xml"],
+  pnd_field_files=["1D_pnd_field.xml",
+                   "1D_pnd_field.xml"] )
 
 #scat_dataCheck( scat_data = scat_data_raw )
 scat_dataCalc
@@ -201,8 +207,9 @@ doit_za_interpSet( interp_method="linear" )
 # be given by a file. If no filename is specified (za_grid_opt_file = ""), the 
 # equidistant grids are used for both, scattering integral and RT calculation. 
 # This option can only be used for down-looking geometries. 
-DOAngularGridsSet( N_za_grid=19, N_aa_grid=37,
-                     za_grid_opt_file="testdata/testdoit_za_grid_opt.xml" )
+#DOAngularGridsSet( N_za_grid=19, N_aa_grid=37,
+#                     za_grid_opt_file="testdata/testdoit_za_grid_opt.xml" )
+DOAngularGridsSet( N_za_grid=19, N_aa_grid=37)
 
 # Main agenda for DOIT calculation
 # --------------------------------
@@ -271,7 +278,8 @@ AgendaSet( spt_calc_agenda ){
 # ----------------------
 AgendaSet( doit_conv_test_agenda ){
   # Give limits for all Stokes components in Rayleigh Jeans BT:
-  doit_conv_flagAbsBT( epsilon=[0.1, 0.01, 0.01, 0.01] )
+#  doit_conv_flagAbsBT( epsilon=[0.1, 0.01, 0.01, 0.01] )
+  doit_conv_flagAbsBT( epsilon=[0.1] )
 
   # Alternative: Give limits in radiances
   #doit_conv_flagAbs( doit_conv_flag, doit_iteration_counter, doit_i_field,
@@ -294,9 +302,9 @@ AgendaSet( iy_cloudbox_agenda ){
 
 
 
-
+abs_xsec_agenda_checkedCalc
 propmat_clearsky_agenda_checkedCalc
-atmfields_checkedCalc
+atmfields_checkedCalc(bad_partition_functions_ok=1)
 atmgeom_checkedCalc
 cloudbox_checkedCalc
 scat_data_checkedCalc
@@ -328,13 +336,13 @@ yCalc
 
 
 
-WriteXML( in=y )
+WriteXML( "ascii", y, "CloudySky_DOIT_1D_Tb.xml" )
 
 #==================check==========================
 
-VectorCreate(yREFERENCE)
-ReadXML( yREFERENCE, "artscomponents/doit/yREFERENCE_DOIT.xml" )
-Compare( y, yREFERENCE, 1e-6 )
+#VectorCreate(yREFERENCE)
+#ReadXML( yREFERENCE, "artscomponents/doit/yREFERENCE_DOIT.xml" )
+#Compare( y, yREFERENCE, 1e-6 )
 
 } # End of Main
  

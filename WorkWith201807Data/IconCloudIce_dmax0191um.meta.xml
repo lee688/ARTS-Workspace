@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<arts version="1" format="ascii">
+<ScatteringMetaData version="3">
+<String>"Meta data for ICON cloud ice"</String>
+<String>"location: Chalmers, software: Rimecraft."</String>
+<String>"Matzler 2006"</String>
+<Numeric>4.7998300e-10</Numeric>
+<Numeric>1.9106586e-04</Numeric>
+<Numeric>1.0000000e-04</Numeric>
+<Numeric>1.8623387e-04</Numeric>
+</ScatteringMetaData>
+</arts>
